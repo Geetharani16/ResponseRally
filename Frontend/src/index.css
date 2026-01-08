@@ -1,0 +1,268 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ResponseRally Design System - Dark Technical Aesthetic */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@layer base {
+  :root {
+    /* Dark technical theme */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 96%;
+
+    /* Electric cyan primary */
+    --primary: 186 100% 50%;
+    --primary-foreground: 222 47% 6%;
+
+    --secondary: 222 30% 14%;
+    --secondary-foreground: 210 40% 90%;
+
+    --muted: 222 30% 12%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 186 80% 40%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 14%;
+    --ring: 186 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --glow-primary: 186 100% 50%;
+    --surface-elevated: 222 40% 11%;
+    --surface-overlay: 222 40% 8%;
+    
+    /* Provider colors */
+    --provider-gpt: 142 70% 45%;
+    --provider-llama: 220 90% 56%;
+    --provider-mistral: 32 95% 55%;
+    --provider-gemini: 340 80% 55%;
+    --provider-copilot: 200 90% 50%;
+    --provider-deepseek: 270 70% 60%;
+
+    /* Status colors */
+    --status-success: 142 70% 45%;
+    --status-warning: 38 92% 50%;
+    --status-error: 0 72% 51%;
+    --status-pending: 222 50% 50%;
+    --status-streaming: 186 100% 50%;
+
+    /* Metrics */
+    --metric-latency: 38 92% 50%;
+    --metric-tokens: 186 100% 50%;
+    --metric-length: 270 70% 60%;
+
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 186 100% 50%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 222 30% 14%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 222 30% 18%;
+    --sidebar-ring: 186 100% 50%;
+  }
+
+  .dark {
+    /* Same as root - dark by default */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 186 100% 50%;
+    --primary-foreground: 222 47% 6%;
+    --secondary: 222 30% 14%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 222 30% 12%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 186 80% 40%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 222 30% 18%;
+    --input: 222 30% 14%;
+    --ring: 186 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
+  }
+
+  /* Horizontal scroll container */
+  .scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted));
+  }
+}
+
+@layer components {
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 
+      0 0 20px hsl(var(--glow-primary) / 0.15),
+      0 0 40px hsl(var(--glow-primary) / 0.1);
+  }
+
+  .glow-primary-intense {
+    box-shadow: 
+      0 0 20px hsl(var(--glow-primary) / 0.3),
+      0 0 60px hsl(var(--glow-primary) / 0.2),
+      inset 0 0 20px hsl(var(--glow-primary) / 0.05);
+  }
+
+  /* Glass morphism card */
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--card) / 0.9),
+      hsl(var(--surface-elevated) / 0.8)
+    );
+  }
+
+  /* Provider badge styles */
+  .provider-gpt {
+    --provider-color: var(--provider-gpt);
+    @apply border-l-2;
+    border-left-color: hsl(var(--provider-gpt));
+  }
+
+  .provider-llama {
+    --provider-color: var(--provider-llama);
+    @apply border-l-2;
+    border-left-color: hsl(var(--provider-llama));
+  }
+
+  .provider-mistral {
+    --provider-color: var(--provider-mistral);
+    @apply border-l-2;
+    border-left-color: hsl(var(--provider-mistral));
+  }
+
+  .provider-gemini {
+    --provider-color: var(--provider-gemini);
+    @apply border-l-2;
+    border-left-color: hsl(var(--provider-gemini));
+  }
+
+  .provider-copilot {
+    --provider-color: var(--provider-copilot);
+    @apply border-l-2;
+    border-left-color: hsl(var(--provider-copilot));
+  }
+
+  .provider-deepseek {
+    --provider-color: var(--provider-deepseek);
+    @apply border-l-2;
+    border-left-color: hsl(var(--provider-deepseek));
+  }
+
+  /* Streaming animation */
+  @keyframes pulse-stream {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .streaming-indicator {
+    animation: pulse-stream 1.5s ease-in-out infinite;
+  }
+
+  @keyframes typing-cursor {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .typing-cursor::after {
+    content: '▋';
+    animation: typing-cursor 1s steps(1) infinite;
+    @apply text-primary ml-0.5;
+  }
+
+  /* Status pulse */
+  @keyframes status-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .status-pulse {
+    animation: status-pulse 2s ease-in-out infinite;
+  }
+
+  /* Mono text for metrics */
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Response card hover */
+  .response-card {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .response-card:hover {
+    @apply -translate-y-1;
+    box-shadow: 
+      0 10px 40px hsl(var(--background) / 0.8),
+      0 0 0 1px hsl(var(--border) / 0.5);
+  }
+
+  /* Best selection glow */
+  .best-selected {
+    @apply ring-2 ring-primary glow-primary-intense;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--accent))
+    );
+  }
+
+  /* Input focus glow */
+  .input-glow:focus-within {
+    @apply ring-2 ring-primary/50 glow-primary;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
