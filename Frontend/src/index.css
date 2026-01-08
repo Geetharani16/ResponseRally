@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ResponseRally Design System - Dark Technical Aesthetic */
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ResponseRally Design System - Dark Technical Aesthetic */
 
 @layer base {
   :root {
@@ -99,70 +99,70 @@
   }
 
   .light {
-    /* Soft light theme */
-    --background: 0 0% 98%;
-    --foreground: 222 47% 10%;
+    /* Green, Yellow and White gradient light theme */
+    --background: 60 100% 98%; /* Very light yellow */
+    --foreground: 120 40% 10%; /* Dark green */
     
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 10%;
+    --card: 60 100% 100%; /* Pure white */
+    --card-foreground: 120 40% 10%; /* Dark green */
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 10%;
+    --popover: 60 100% 100%; /* Pure white */
+    --popover-foreground: 120 40% 10%; /* Dark green */
     
-    --primary: 186 70% 40%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 120 60% 40%; /* Green */
+    --primary-foreground: 60 100% 98%; /* Light yellow */
     
-    --secondary: 220 15% 90%;
-    --secondary-foreground: 222 47% 15%;
+    --secondary: 60 80% 90%; /* Light yellow */
+    --secondary-foreground: 120 40% 15%; /* Medium-dark green */
     
-    --muted: 220 15% 95%;
-    --muted-foreground: 220 10% 40%;
+    --muted: 60 80% 95%; /* Light yellow */
+    --muted-foreground: 60 10% 40%; /* Light brownish */
     
-    --accent: 186 60% 50%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 60 70% 50%; /* Yellow */
+    --accent-foreground: 60 100% 98%; /* Light yellow */
     
-    --destructive: 0 70% 40%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 70% 40%; /* Red (kept for error states) */
+    --destructive-foreground: 60 100% 98%; /* Light yellow */
     
-    --border: 220 13% 90%;
-    --input: 220 13% 85%;
-    --ring: 186 70% 40%;
+    --border: 60 70% 85%; /* Light yellow */
+    --input: 60 70% 80%; /* Lighter yellow */
+    --ring: 120 60% 40%; /* Green */
     
     --radius: 0.75rem;
     
-    /* Custom tokens for light theme */
-    --glow-primary: 186 70% 40%;
-    --surface-elevated: 0 0% 96%;
-    --surface-overlay: 0 0% 94%;
+    /* Custom tokens for green-yellow-white theme */
+    --glow-primary: 120 60% 40%; /* Green */
+    --surface-elevated: 60 100% 96%; /* Light yellow */
+    --surface-overlay: 60 100% 94%; /* Light yellow */
     
-    /* Lighter provider colors */
-    --provider-gpt: 142 50% 65%;
-    --provider-llama: 220 60% 70%;
-    --provider-mistral: 32 70% 75%;
-    --provider-gemini: 340 60% 75%;
-    --provider-copilot: 200 60% 65%;
-    --provider-deepseek: 270 50% 75%;
+    /* Green-yellow provider colors */
+    --provider-gpt: 120 50% 50%; /* Green */
+    --provider-llama: 60 70% 60%; /* Yellow */
+    --provider-mistral: 60 80% 65%; /* Yellow */
+    --provider-gemini: 60 85% 70%; /* Light yellow */
+    --provider-copilot: 120 40% 55%; /* Green */
+    --provider-deepseek: 60 60% 75%; /* Yellow */
     
-    /* Light status colors */
-    --status-success: 142 50% 65%;
-    --status-warning: 38 70% 65%;
-    --status-error: 0 70% 50%;
-    --status-pending: 220 15% 60%;
-    --status-streaming: 186 70% 40%;
+    /* Green-yellow status colors */
+    --status-success: 120 50% 50%; /* Green */
+    --status-warning: 60 80% 60%; /* Yellow */
+    --status-error: 0 70% 50%; /* Red (kept for error) */
+    --status-pending: 60 20% 60%; /* Light yellow */
+    --status-streaming: 120 60% 40%; /* Green */
     
-    /* Light metrics */
-    --metric-latency: 38 70% 65%;
-    --metric-tokens: 186 70% 40%;
-    --metric-length: 270 50% 75%;
+    /* Green-yellow metrics */
+    --metric-latency: 60 80% 60%; /* Yellow */
+    --metric-tokens: 120 60% 40%; /* Green */
+    --metric-length: 60 60% 75%; /* Yellow */
     
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 222 47% 10%;
-    --sidebar-primary: 186 70% 40%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 15% 90%;
-    --sidebar-accent-foreground: 222 47% 15%;
-    --sidebar-border: 220 13% 90%;
-    --sidebar-ring: 186 70% 40%;
+    --sidebar-background: 60 100% 98%; /* Light yellow */
+    --sidebar-foreground: 120 40% 10%; /* Dark green */
+    --sidebar-primary: 120 60% 40%; /* Green */
+    --sidebar-primary-foreground: 60 100% 98%; /* Light yellow */
+    --sidebar-accent: 60 80% 90%; /* Light yellow */
+    --sidebar-accent-foreground: 120 40% 15%; /* Medium-dark green */
+    --sidebar-border: 60 70% 85%; /* Light yellow */
+    --sidebar-ring: 120 60% 40%; /* Green */
   }
 }
 
@@ -319,6 +319,16 @@
       135deg,
       hsl(var(--primary)),
       hsl(var(--accent))
+    );
+  }
+  
+  /* Green-yellow-white specific gradient */
+  .green-yellow-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      hsl(120 60% 40%), /* Green */
+      hsl(60 70% 50%)  /* Yellow */
     );
   }
 
