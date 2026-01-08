@@ -1,0 +1,92 @@
+digraph ResponseRally_ConversationTree {
+    rankdir=TB;
+    fontname="Helvetica";
+    bgcolor="transparent";
+    splines=ortho;
+    nodesep=0.6;
+    ranksep=0.9;
+
+    node [
+        shape=rectangle,
+        style="rounded,filled",
+        fontname="Helvetica",
+        color="#000000"
+    ];
+
+    edge [
+        color="#000000",
+        arrowhead=normal
+    ];
+
+    /* ===== Prompt Nodes ===== */
+    P1 [label="Prompt 1", fillcolor="#E0F2FE"];
+    P2 [label="Prompt 2", fillcolor="#E0F2FE"];
+    P3 [label="Prompt 3", fillcolor="#E0F2FE"];
+    P4 [label="Prompt 4", fillcolor="#E0F2FE"];
+    P5 [label="Prompt 5", fillcolor="#E0F2FE"];
+
+    /* ===== AI Models (Light = Non-selected) ===== */
+    node [fillcolor="#F3F4F6"];
+
+    P1_ChatGPT   [label="ChatGPT"];
+    P1_Gemini    [label="Google Gemini"];
+    P1_LLaMA     [label="LLaMA"];
+    P1_Mistral   [label="Mistral"];
+    P1_Copilot   [label="Copilot"];
+    P1_DeepSeek  [label="DeepSeek"];
+
+    P2_ChatGPT   [label="ChatGPT"];
+    P2_Gemini    [label="Google Gemini"];
+    P2_LLaMA     [label="LLaMA"];
+    P2_Mistral   [label="Mistral"];
+    P2_Copilot   [label="Copilot"];
+    P2_DeepSeek  [label="DeepSeek"];
+
+    P3_ChatGPT   [label="ChatGPT"];
+    P3_Gemini    [label="Google Gemini"];
+    P3_LLaMA     [label="LLaMA"];
+    P3_Mistral   [label="Mistral"];
+    P3_Copilot   [label="Copilot"];
+    P3_DeepSeek  [label="DeepSeek"];
+
+    P4_ChatGPT   [label="ChatGPT"];
+    P4_Gemini    [label="Google Gemini"];
+    P4_LLaMA     [label="LLaMA"];
+    P4_Mistral   [label="Mistral"];
+    P4_Copilot   [label="Copilot"];
+    P4_DeepSeek  [label="DeepSeek"];
+
+    P5_ChatGPT   [label="ChatGPT"];
+    P5_Gemini    [label="Google Gemini"];
+    P5_LLaMA     [label="LLaMA"];
+    P5_Mistral   [label="Mistral"];
+    P5_Copilot   [label="Copilot"];
+    P5_DeepSeek  [label="DeepSeek"];
+
+    /* ===== Selected Responses (Darker) ===== */
+    P1_LLaMA     [fillcolor="#A5B4FC"];
+    P2_DeepSeek  [fillcolor="#A5B4FC"];
+    P3_ChatGPT   [fillcolor="#A5B4FC"];
+    P4_Copilot   [fillcolor="#A5B4FC"];
+    P5_Gemini    [fillcolor="#A5B4FC"];
+
+    /* ===== Prompt → AI Fan-out (Parallel) ===== */
+    P1 -> {P1_ChatGPT P1_Gemini P1_Mistral P1_Copilot P1_DeepSeek} [style=dotted];
+    P2 -> {P2_ChatGPT P2_Gemini P2_LLaMA P2_Mistral P2_Copilot } [style=dotted];
+    P3 -> {P3_Gemini P3_LLaMA P3_Mistral P3_Copilot P3_DeepSeek} [style=dotted];
+    P4 -> {P4_ChatGPT P4_Gemini P4_LLaMA P4_Mistral P4_DeepSeek} [style=dotted];
+    P5 -> {P5_ChatGPT P5_LLaMA P5_Mistral P5_Copilot P5_DeepSeek} [style=dotted];
+
+    /* ===== Prompt → Selected AI (SOLID) ===== */
+    P1 -> P1_LLaMA     [penwidth=2];
+    P2 -> P2_DeepSeek  [penwidth=2];
+    P3 -> P3_ChatGPT   [penwidth=2];
+    P4 -> P4_Copilot   [penwidth=2];
+    P5 -> P5_Gemini    [penwidth=2];
+
+    /* ===== Selected Conversation Path ===== */
+    P1_LLaMA    -> P2 [penwidth=2];
+    P2_DeepSeek -> P3 [penwidth=2];
+    P3_ChatGPT  -> P4 [penwidth=2];
+    P4_Copilot  -> P5 [penwidth=2];
+}

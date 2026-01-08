@@ -1,6 +1,6 @@
 // ResponseRally Type Definitions
 
-export type ProviderType = 'gpt' | 'llama' | 'mistral' | 'gemini' | 'copilot' | 'deepseek';
+export type ProviderType = 'gpt' | 'llama' | 'mistral' | 'gemini' | 'copilot' | 'deepseek' | 'ollama';
 
 export type RequestStatus = 'idle' | 'pending' | 'streaming' | 'success' | 'error' | 'timeout' | 'rate-limited';
 
@@ -60,4 +60,5 @@ export const PROVIDERS: ProviderConfig[] = [
   { id: 'gemini', name: 'Gemini', displayName: 'Google Gemini', color: 'provider-gemini', enabled: true },
   { id: 'copilot', name: 'Copilot', displayName: 'Microsoft Copilot', color: 'provider-copilot', enabled: true },
   { id: 'deepseek', name: 'DeepSeek', displayName: 'DeepSeek', color: 'provider-deepseek', enabled: true },
+  { id: 'ollama', name: 'Ollama', displayName: 'Ollama Gemma3 1B', color: 'provider-ollama', enabled: true },
 ];

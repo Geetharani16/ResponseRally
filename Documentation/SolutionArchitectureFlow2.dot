@@ -1,0 +1,113 @@
+digraph ResponseRally_AdvancedConversationFlow {
+    rankdir=TB;
+    fontname="Helvetica";
+    bgcolor="transparent";
+    splines=ortho;
+    nodesep=0.6;
+    ranksep=0.9;
+
+    node [
+        shape=rectangle,
+        style="rounded,filled",
+        fontname="Helvetica",
+        color="#000000"
+    ];
+
+    edge [
+        color="#000000",
+        arrowhead=normal
+    ];
+
+    /* ===== Entry from Benchmarking ===== */
+    BestResponse [
+        label="Best Response Selected\n(by User)",
+        fillcolor="#FDE68A"
+    ];
+
+    ConversationInit [
+        label="Initialize Conversation Context\n• Selected AI\n• Selected Response\n• Original Prompt",
+        fillcolor="#EDE9FE"
+    ];
+
+    /* ===== Memory & RAG ===== */
+    RAGMemory [
+        label="RAG / Memory Injection\n• Prior Conversations\n• Domain Knowledge\n• User Context (Optional)",
+        fillcolor="#F0FDF4"
+    ];
+
+    /* ===== History Persistence ===== */
+    HistoryStore [
+        label="Conversation History Store\n• Prompt\n• Response\n• AI Provider\n• Branch ID\n• Timestamp",
+        fillcolor="#DCFCE7"
+    ];
+
+    /* ===== Conversation UI ===== */
+    ConversationUI [
+        label="Conversation View\n(Chat-style Interface)",
+        fillcolor="#E0F2FE"
+    ];
+
+    /* ===== User Interaction ===== */
+    UserFollowUp [
+        label="User Enters Follow-up Query",
+        fillcolor="#EEF4FF"
+    ];
+
+    ContextBuilder [
+        label="Context Builder\n• Load History\n• Apply Branch\n• Inject RAG Memory",
+        fillcolor="#F2F7F5"
+    ];
+
+    ActiveAI [
+        label="Active AI Provider\n(Current Selection)",
+        fillcolor="#FFF7E6"
+    ];
+
+    AIResponse [
+        label="AI Generates Response\n(Context-Aware)",
+        fillcolor="#FFEDD5"
+    ];
+
+    UpdateHistory [
+        label="Update Conversation History",
+        fillcolor="#DCFCE7"
+    ];
+
+    /* ===== Advanced Controls ===== */
+    ReselectAI [
+        label="Re-select AI Provider\n(Mid-Conversation)",
+        fillcolor="#FFE4E6"
+    ];
+
+    BranchConversation [
+        label="Create Conversation Branch\n(New Path from Earlier Message)",
+        fillcolor="#E0E7FF"
+    ];
+
+    ExportShare [
+        label="Export / Share Conversation\n• PDF\n• JSON\n• Link",
+        fillcolor="#ECFEFF"
+    ];
+
+    /* ===== Flow ===== */
+    BestResponse -> ConversationInit;
+    ConversationInit -> HistoryStore;
+    ConversationInit -> ConversationUI;
+
+    ConversationUI -> UserFollowUp;
+    UserFollowUp -> ContextBuilder;
+    ContextBuilder -> RAGMemory;
+    RAGMemory -> ActiveAI;
+    ActiveAI -> AIResponse;
+    AIResponse -> UpdateHistory;
+    UpdateHistory -> ConversationUI;
+
+    /* ===== Optional Paths ===== */
+    ConversationUI -> ReselectAI;
+    ReselectAI -> ActiveAI;
+
+    ConversationUI -> BranchConversation;
+    BranchConversation -> ContextBuilder;
+
+    ConversationUI -> ExportShare;
+}

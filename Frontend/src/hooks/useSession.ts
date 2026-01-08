@@ -89,7 +89,10 @@ const apiService = {
 
   // Get session
   getSession: async (sessionId: string) => {
-    const response = await fetch(`http://localhost:5000/api/v1/session/${sessionId}`);
+    const response = await fetch(`http://localhost:5000/api/v1/session/${sessionId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
     if (!response.ok) throw new Error('Failed to get session');
     return response.json();
   },
