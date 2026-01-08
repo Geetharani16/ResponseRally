@@ -97,6 +97,73 @@
     --input: 222 30% 14%;
     --ring: 186 100% 50%;
   }
+
+  .light {
+    /* Soft light theme */
+    --background: 0 0% 98%;
+    --foreground: 222 47% 10%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 10%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 10%;
+    
+    --primary: 186 70% 40%;
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 220 15% 90%;
+    --secondary-foreground: 222 47% 15%;
+    
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 40%;
+    
+    --accent: 186 60% 50%;
+    --accent-foreground: 0 0% 98%;
+    
+    --destructive: 0 70% 40%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 220 13% 90%;
+    --input: 220 13% 85%;
+    --ring: 186 70% 40%;
+    
+    --radius: 0.75rem;
+    
+    /* Custom tokens for light theme */
+    --glow-primary: 186 70% 40%;
+    --surface-elevated: 0 0% 96%;
+    --surface-overlay: 0 0% 94%;
+    
+    /* Lighter provider colors */
+    --provider-gpt: 142 50% 65%;
+    --provider-llama: 220 60% 70%;
+    --provider-mistral: 32 70% 75%;
+    --provider-gemini: 340 60% 75%;
+    --provider-copilot: 200 60% 65%;
+    --provider-deepseek: 270 50% 75%;
+    
+    /* Light status colors */
+    --status-success: 142 50% 65%;
+    --status-warning: 38 70% 65%;
+    --status-error: 0 70% 50%;
+    --status-pending: 220 15% 60%;
+    --status-streaming: 186 70% 40%;
+    
+    /* Light metrics */
+    --metric-latency: 38 70% 65%;
+    --metric-tokens: 186 70% 40%;
+    --metric-length: 270 50% 75%;
+    
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222 47% 10%;
+    --sidebar-primary: 186 70% 40%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 220 15% 90%;
+    --sidebar-accent-foreground: 222 47% 15%;
+    --sidebar-border: 220 13% 90%;
+    --sidebar-ring: 186 70% 40%;
+  }
 }
 
 @layer base {
