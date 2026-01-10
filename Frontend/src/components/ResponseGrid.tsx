@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { ProviderResponse, ProviderType } from '@/types';
 import { ResponseCard } from './ResponseCard';
+import { ComprehensiveMetricsMatrix } from './ComprehensiveMetricsMatrix';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -88,6 +89,7 @@ export const ResponseGrid: React.FC<ResponseGridProps> = ({
 
   return (
     <div className="relative">
+      
       {/* Scroll Buttons */}
       {canScrollLeft && (
         <Button
@@ -153,6 +155,13 @@ export const ResponseGrid: React.FC<ResponseGridProps> = ({
           />
         ))}
       </div>
+      
+      {/* Comprehensive Metrics Matrix */}
+      {responses.length > 0 && (
+        <div className="mt-6">
+          <ComprehensiveMetricsMatrix responses={responses} />
+        </div>
+      )}
     </div>
   );
 };

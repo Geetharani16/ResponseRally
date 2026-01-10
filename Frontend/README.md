@@ -34,6 +34,18 @@ This project is built with:
 - shadcn/ui
 - Tailwind CSS
 
+## Components
+
+- **Header.tsx**: Application header with theme toggle and session controls
+- **PromptInput.tsx**: Multi-provider prompt submission interface
+- **ResponseGrid.tsx**: Horizontal scrolling grid for displaying responses
+- **ResponseCard.tsx**: Individual response display with actions
+- **ComprehensiveMetricsMatrix.tsx**: Combined metrics matrix showing all provider metrics in tabular format
+- **ConversationHistory.tsx**: Chronological display of conversation turns
+- **MetricsPanel.tsx**: Performance metrics visualization
+- **ProviderBadge.tsx**: Provider identification badges
+- **StatusIndicator.tsx**: Visual status indicators
+
 ## Scripts
 
 - `npm run dev` - Start the development server

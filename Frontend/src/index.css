@@ -1,8 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ResponseRally Design System - Dark Technical Aesthetic */
 
@@ -340,5 +341,41 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Horizontal slide in/out animations */
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slideOutRight {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+  }
+  
+  .animate-slide-in-right {
+    animation: slideInRight 0.2s ease-out forwards;
+  }
+  
+  .animate-slide-out-right {
+    animation: slideOutRight 0.2s ease-out forwards;
+  }
+  
+  /* Better tooltip styling */
+  .tooltip-themed {
+    @apply bg-primary text-primary-foreground px-2 py-1 rounded text-xs whitespace-nowrap;
   }
 }

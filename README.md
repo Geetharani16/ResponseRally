@@ -35,11 +35,12 @@ ResponseRally/
 │   │   │   ├── ProviderBadge.tsx # Provider identification badges
 │   │   │   ├── ResponseCard.tsx  # Individual response display
 │   │   │   ├── ResponseGrid.tsx  # Grid layout for response comparison
-│   │   │   └── StatusIndicator.tsx
-│   │   ├── hooks/
-│   │   │   ├── use-mobile.tsx
-│   │   │   ├── use-toast.ts
-│   │   │   └── useSession.ts     # Session state management (with backend API integration)
+│   │   │   ├── StatusIndicator.tsx
+│   │   │   └── ComprehensiveMetricsMatrix.tsx  # Combined metrics matrix for all providers
+│   ├── hooks/
+│   │   ├── use-mobile.tsx
+│   │   ├── use-toast.ts
+│   │   └── useSession.ts     # Session state management (with backend API integration)
 │   │   ├── lib/
 │   │   │   ├── mockApi.ts      # Mock API for development (will be replaced by backend)
 │   │   │   └── utils.ts
@@ -85,6 +86,7 @@ The frontend is built with React, TypeScript, and Vite, featuring:
 - **ResponseCard.tsx**: Individual response cards with metrics and selection functionality
 - **PromptInput.tsx**: Input component with provider toggling capabilities
 - **MetricsPanel.tsx**: Performance metrics display (latency, tokens, etc.)
+- **ComprehensiveMetricsMatrix.tsx**: Detailed metrics matrix display with expanded metrics (latency, tokens, efficiency, etc.)
 
 ### Styling & Themes
 - **index.css**: Defines CSS variables for both dark and light themes

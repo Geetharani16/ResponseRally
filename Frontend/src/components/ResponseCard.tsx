@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { ProviderResponse } from '@/types';
 import { ProviderBadge } from './ProviderBadge';
 import { StatusIndicator } from './StatusIndicator';
-import { MetricsPanel } from './MetricsPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Star, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
+import { Star, RefreshCw, Eye, EyeOff } from 'lucide-react';
 
 interface ResponseCardProps {
   response: ProviderResponse;
@@ -28,7 +27,7 @@ export const ResponseCard: React.FC<ResponseCardProps> = ({
   isHidden = false,
   onToggleHide,
 }) => {
-  const [metricsExpanded, setMetricsExpanded] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
   
   const canSelectBest = response.status === 'success' && !isSelected;
   const canRetry = response.status === 'error' || response.status === 'rate-limited' || response.status === 'timeout';
@@ -60,7 +59,7 @@ export const ResponseCard: React.FC<ResponseCardProps> = ({
   return (
     <div
       className={cn(
-        'flex-shrink-0 w-[420px] min-w-[420px] glass-card rounded-xl flex flex-col',
+        'flex-shrink-0 w-[420px] min-w-[420px] glass-card rounded-xl flex flex-col relative',
         'response-card animate-slide-in-right',
         `provider-${response.provider}`,
         isSelected && 'best-selected',
@@ -142,39 +141,36 @@ export const ResponseCard: React.FC<ResponseCardProps> = ({
         </div>
       )}
 
-      {/* Metrics Section */}
-      {showMetrics && response.status !== 'pending' && (
-        <div className="border-t border-border/30">
-          <button
-            onClick={() => setMetricsExpanded(!metricsExpanded)}
-            className="flex items-center justify-between w-full p-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <span className="font-medium">Metrics</span>
-            {metricsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          {metricsExpanded && (
-            <div className="px-3 pb-3">
-              <MetricsPanel
-                metrics={response.metrics}
-                isStreaming={response.isStreaming}
-                retryCount={response.retryCount}
-              />
+      {/* Action Button - Positioned in bottom right corner */}
+      {!isSelected && canSelectBest && (
+        <div className="absolute bottom-3 right-3 z-20">
+          <div className="relative group">
+            <Button
+              onClick={onSelectBest}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              className="h-8 w-8 p-0 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30 relative z-10"
+              variant="outline"
+            >
+              <Star className="w-4 h-4" />
+            </Button>
+            <div 
+              className={`absolute top-1/2 -translate-y-1/2 right-full mr-2 tooltip-themed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none ${isHovered ? 'animate-slide-in-right' : 'animate-slide-out-right'}`}
+              style={{ animationFillMode: 'forwards' }}
+            >
+              Select as Best
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Action Footer */}
-      {canSelectBest && (
-        <div className="p-3 border-t border-border/30">
-          <Button
-            onClick={onSelectBest}
-            className="w-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/30"
-            variant="outline"
-          >
-            <Star className="w-4 h-4 mr-2" />
-            Select as Best Response
-          </Button>
+      {/* Selected Status Indicator - Positioned in bottom left corner */}
+      {isSelected && (
+        <div className="absolute bottom-3 left-3 z-20">
+          <span className="flex items-center gap-1 text-primary font-medium text-sm">
+            <Star className="w-4 h-4 fill-current" />
+            Best
+          </span>
         </div>
       )}
     </div>
