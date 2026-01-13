@@ -18,37 +18,13 @@ const ConversationFlowDialog: React.FC<ConversationFlowDialogProps> = ({
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>('');
   const [scale, setScale] = useState<number>(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
   const [showMetrics, setShowMetrics] = useState(true);
 
   const zoomIn = () => setScale(prev => Math.min(prev + 0.2, 3));
   const zoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
   const resetView = () => {
     setScale(1);
-    setPosition({ x: 0, y: 0 });
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return; // Only left click
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
   };
 
   // Add scroll zoom
@@ -81,7 +57,7 @@ const ConversationFlowDialog: React.FC<ConversationFlowDialogProps> = ({
       const width = 1600; // Increased width for better spacing
       const height = Math.max(800, session.conversationHistory.length * 250); // Dynamic height
       
-      let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="background: #ffffff; font-family: 'Inter', -apple-system, sans-serif;">
+      let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="background: #ffffff; font-family: 'Inter', -apple-system, sans-serif; min-height: ${height}px; height: auto;">
         <style>
           .node { }
           .prompt-node { }
@@ -89,8 +65,7 @@ const ConversationFlowDialog: React.FC<ConversationFlowDialogProps> = ({
           .connection { stroke-linecap: round; stroke-linejoin: round; }
           .selected-connection { filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.6)); }
           .selected-node { }
-          .node:hover { transform: scale(1.1); filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3)); }
-          .node:hover .node-circle { stroke-width: 4 !important; stroke: #4f46e5; }
+          .node { }
           .disabled { opacity: 0.6; }
           text { user-select: none; font-weight: 700; }
           .node-circle { transition: all 0.2s ease; }
@@ -354,7 +329,7 @@ Metrics:
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 overflow-hidden">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-[calc(100vh-100px)] p-0 overflow-hidden">
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-gray-50 to-slate-50">
             <div>
@@ -381,15 +356,7 @@ Metrics:
                 <Button onClick={resetView} variant="ghost" size="icon" className="h-8 w-8">
                   <Maximize2 className="h-4 w-4" />
                 </Button>
-                <Button 
-                  onMouseDown={handleMouseDown}
-                  variant="ghost" 
-                  size="icon" 
-                  className={`h-8 w-8 ${isDragging ? 'bg-gray-100' : ''}`}
-                  title="Pan mode (hold and drag)"
-                >
-                  <Move className="h-4 w-4" />
-                </Button>
+
               </div>
               <Button onClick={onClose} variant="ghost" size="icon" className="h-8 w-8">
                 <X className="h-4 w-4" />
@@ -400,53 +367,45 @@ Metrics:
           <div className="flex-1 flex overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50/30">
             <div 
               ref={svgContainerRef}
-              className="flex-1 overflow-auto relative"
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-              style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+              className="flex-1 overflow-y-auto overflow-x-auto relative"
+              style={{ cursor: 'default', maxHeight: 'none' }}
             >
               <div 
-                className="w-full h-full relative"
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'flex-start',
-                  padding: '40px'
-                }}
+                className="w-full flex justify-center pt-8 pb-8"
+                style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}
               >
                 <div 
                   className="bg-white rounded-xl p-4"
                   style={{
-                    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                    transformOrigin: '0 0',
-                    transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'center',
+                    transition: 'transform 0.2s ease-out',
                     minWidth: 'fit-content',
-                    minHeight: 'fit-content'
+                    minHeight: 'fit-content',
+                    overflow: 'visible',
+                    alignSelf: 'center'
                   }}
                   dangerouslySetInnerHTML={{ __html: svgContent }}
                 />
               </div>
               
               {/* Overlay instructions */}
-              {!isDragging && (
-                <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg border shadow-sm">
-                  <div className="text-xs text-gray-600 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-500"></div>
-                      <span>Prompt nodes</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-purple-500"></div>
-                      <span>Selected responses</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Move className="h-3 w-3" />
-                      <span>Drag to pan • Scroll to zoom</span>
-                    </div>
+              <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg border shadow-sm">
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-500"></div>
+                    <span>Prompt nodes</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-purple-500"></div>
+                    <span>Selected responses</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <BarChart2 className="h-3 w-3" />
+                    <span>Scroll to zoom • Vertical scroll to navigate</span>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
             
             {renderMetricsSummary()}
