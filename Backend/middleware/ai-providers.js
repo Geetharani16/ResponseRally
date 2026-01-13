@@ -1,8 +1,8 @@
 /**
  * AI Provider Integration Middleware
  * 
- * OPENROUTER PROVIDERS (Share API Keys):
- * ===================================
+ * OPENROUTER PROVIDERS (Multiple providers share same API Key):
+ * ==================================================================
  * | Provider | API Key Env    | Model Name                     | Purpose |
  * |----------|----------------|--------------------------------|---------|
  * | GPT      | DEEPSEEK_API_KEY | xiaomi/mimo-v2-flash:free      | Xiaomi MiMo via OpenRouter |
