@@ -530,24 +530,19 @@ class ProviderService {
       
       const startTime = Date.now();
       
-      // Call real DeepSeek API via OpenRouter
-      const apiKey = process.env.GOOGLE_API_KEY; // Use the same OpenRouter key for both Gemini and DeepSeek
-      
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // Call real DeepSeek API (using OpenAI-compatible endpoint)
+      const response = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'http://localhost:5768',
-          'X-Title': 'ResponseRally'
+          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
-          model: 'tngtech/deepseek-r1t2-chimera:free',
-          messages: [
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 2000
+          model: 'deepseek-chat',
+          messages: [{ role: 'user', content: prompt }],
+          stream: false,
+          temperature: 0.7
         })
       });
       
