@@ -46,10 +46,10 @@ const providers = {
     model: 'copilot-model'
   },
   deepseek: {
-    name: 'DeepSeek Chat (Direct API)',
-    baseUrl: 'https://api.deepseek.com',
-    apiKeyEnv: 'DEEPSEEK_API_KEY',
-    model: 'deepseek-chat'  // Direct DeepSeek API model
+    name: 'DeepSeek R1T2 Chimera Free (via OpenRouter)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKeyEnv: 'GOOGLE_API_KEY',
+    model: 'tngtech/deepseek-r1t2-chimera:free'  // Using OpenRouter's free DeepSeek model
   }
 };
 
