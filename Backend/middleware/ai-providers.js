@@ -1,7 +1,23 @@
 /**
  * AI Provider Integration Middleware
  * 
- * This file will contain the actual implementations for connecting to various AI providers.
+ * OPENROUTER PROVIDERS (Share API Keys):
+ * ===================================
+ * | Provider | API Key Env    | Model Name                     | Purpose |
+ * |----------|----------------|--------------------------------|---------|
+ * | GPT      | DEEPSEEK_API_KEY | xiaomi/mimo-v2-flash:free      | Xiaomi MiMo via OpenRouter |
+ * | LLaMA    | DEEPSEEK_API_KEY | meta-llama/llama-3.3-70b-instruct:free | Meta Llama 3.3 via OpenRouter |
+ * | Gemini   | DEEPSEEK_API_KEY | mistralai/devstral-2512:free   | Google Gemini alternative via OpenRouter |
+ * | Copilot  | DEEPSEEK_API_KEY | nvidia/nemotron-3-nano-30b-a3b:free | Microsoft Copilot alternative via OpenRouter |
+ * | DeepSeek | GOOGLE_API_KEY   | tngtech/deepseek-r1t2-chimera:free | DeepSeek via OpenRouter |
+ * 
+ * STANDALONE PROVIDERS:
+ * ====================
+ * | Provider | API Key Env    | Model Name         | Purpose |
+ * |----------|----------------|--------------------|---------|
+ * | Mistral  | MISTRAL_API_KEY | mistral-large-latest | Direct Mistral API |
+ * 
+ * This file contains the actual implementations for connecting to various AI providers.
  * Currently contains placeholder functions that will be replaced with real API calls.
  */
 
