@@ -1,15 +1,15 @@
 /**
  * AI Provider Integration Middleware
  * 
- * OPENROUTER PROVIDERS (Multiple providers share same API Key):
- * ==================================================================
- * | Provider | API Key Env    | Model Name                     | Purpose |
- * |----------|----------------|--------------------------------|---------|
- * | GPT      | DEEPSEEK_API_KEY | xiaomi/mimo-v2-flash:free      | Xiaomi MiMo via OpenRouter |
- * | LLaMA    | DEEPSEEK_API_KEY | meta-llama/llama-3.3-70b-instruct:free | Meta Llama 3.3 via OpenRouter |
- * | Gemini   | DEEPSEEK_API_KEY | mistralai/devstral-2512:free   | Google Gemini alternative via OpenRouter |
- * | Copilot  | DEEPSEEK_API_KEY | nvidia/nemotron-3-nano-30b-a3b:free | Microsoft Copilot alternative via OpenRouter |
- * | DeepSeek | GOOGLE_API_KEY   | tngtech/deepseek-r1t2-chimera:free | DeepSeek via OpenRouter |
+ * OPENROUTER PROVIDERS (Using Single Shared OpenRouter API Key):
+ * ============================================================== 
+ * | Provider | API Key Env      | Model Name                     | Purpose |
+ * |----------|------------------|--------------------------------|---------|
+ * | GPT      | OPENROUTER_API_KEY | xiaomi/mimo-v2-flash:free      | Xiaomi MiMo via OpenRouter |
+ * | LLaMA    | OPENROUTER_API_KEY | meta-llama/llama-3.3-70b-instruct:free | Meta Llama 3.3 via OpenRouter |
+ * | Gemini   | OPENROUTER_API_KEY | mistralai/devstral-2512:free   | Google Gemini alternative via OpenRouter |
+ * | Copilot  | OPENROUTER_API_KEY | nvidia/nemotron-3-nano-30b-a3b:free | Microsoft Copilot alternative via OpenRouter |
+ * | DeepSeek | OPENROUTER_API_KEY | tngtech/deepseek-r1t2-chimera:free | DeepSeek via OpenRouter |
  * 
  * STANDALONE PROVIDERS:
  * ====================
@@ -28,14 +28,14 @@ const providers = {
   gpt: {
     name: 'Xiaomi MiMo (via OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    apiKeyEnv: 'OPENROUTER_API_KEY',
     model: 'xiaomi/mimo-v2-flash:free'  // Using OpenRouter's free Xiaomi model
   },
 
   llama: {
     name: 'Llama 3.3 70B Instruct Free (via OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    apiKeyEnv: 'OPENROUTER_API_KEY',
     model: 'meta-llama/llama-3.3-70b-instruct:free'  // Using OpenRouter's free Llama model
   },
   mistral: {
@@ -47,19 +47,19 @@ const providers = {
   gemini: {
     name: 'Google Gemini 3 Flash Preview (via OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    apiKeyEnv: 'OPENROUTER_API_KEY',
     model: 'mistralai/devstral-2512:free'  // Using OpenRouter's free model identifier
   },
   copilot: {
     name: 'Microsoft Copilot',
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    apiKeyEnv: 'OPENROUTER_API_KEY',
     model: 'nvidia/nemotron-3-nano-30b-a3b:free'  // Using OpenRouter's free model identifier
   },
   deepseek: {
     name: 'DeepSeek R1T2 Chimera Free (via OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKeyEnv: 'GOOGLE_API_KEY',
+    apiKeyEnv: 'OPENROUTER_API_KEY',
     model: 'tngtech/deepseek-r1t2-chimera:free'  // Using OpenRouter's free DeepSeek model
   }
 };
