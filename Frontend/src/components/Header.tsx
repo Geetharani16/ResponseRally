@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { Sparkles, Sun, Moon, Workflow, Upload } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import ConversationFlowDialog from '@/components/ConversationFlowDialog';
+import ExportDialog from '@/components/ExportDialog';
 
 interface HeaderProps {
   onReset: () => void;
@@ -12,6 +13,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onReset, session }) => {
   const { theme, setTheme } = useTheme();
   const [showFlowDialog, setShowFlowDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   return (
     <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
@@ -45,9 +47,16 @@ export const Header: React.FC<HeaderProps> = ({ onReset, session }) => {
                 'flex items-center justify-center'
               )}
               aria-label="Export"
+              onClick={() => setShowExportDialog(true)}
             >
               <Upload className="w-4 h-4" />
             </button>
+            
+            <ExportDialog 
+              isOpen={showExportDialog}
+              onClose={() => setShowExportDialog(false)} 
+              session={session}
+            />
             <button
               className={cn(
                 'text-sm text-muted-foreground hover:text-foreground',
