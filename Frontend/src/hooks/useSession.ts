@@ -6,8 +6,7 @@ import {
   ProviderType,
   PROVIDERS 
 } from '@/types';
-// TODO: Uncomment when backend is connected
-// import { generateMockResponse } from '@/lib/mockApi';
+
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
@@ -25,7 +24,7 @@ const createInitialSession = (): SessionState => ({
 const apiService = {
   // Create a new session
   createSession: async (): Promise<SessionState> => {
-    const response = await fetch('http://localhost:5000/api/v1/session', {
+    const response = await fetch('http://localhost:5002/api/v1/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -35,7 +34,7 @@ const apiService = {
 
   // Submit prompt to backend
   submitPrompt: async (sessionId: string, prompt: string, providers: ProviderType[], context: ConversationTurn[] = []) => {
-    const response = await fetch('http://localhost:5000/api/v1/prompt', {
+    const response = await fetch('http://localhost:5002/api/v1/prompt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId, prompt, providers, context }),
@@ -46,7 +45,7 @@ const apiService = {
 
   // Select best response
   selectResponse: async (sessionId: string, responseId: string) => {
-    const response = await fetch(`http://localhost:5000/api/v1/session/${sessionId}/select-response`, {
+    const response = await fetch(`http://localhost:5002/api/v1/session/${sessionId}/select-response`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ responseId }),
@@ -57,7 +56,7 @@ const apiService = {
 
   // Toggle provider
   toggleProvider: async (sessionId: string, providerId: ProviderType) => {
-    const response = await fetch(`http://localhost:5000/api/v1/session/${sessionId}/toggle-provider`, {
+    const response = await fetch(`http://localhost:5002/api/v1/session/${sessionId}/toggle-provider`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ providerId }),
@@ -68,7 +67,7 @@ const apiService = {
 
   // Retry provider
   retryProvider: async (sessionId: string, providerId: ProviderType) => {
-    const response = await fetch(`http://localhost:5000/api/v1/session/${sessionId}/retry-provider`, {
+    const response = await fetch(`http://localhost:5002/api/v1/session/${sessionId}/retry-provider`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ providerId }),
@@ -79,7 +78,7 @@ const apiService = {
 
   // Reset session
   resetSession: async (sessionId: string) => {
-    const response = await fetch(`http://localhost:5000/api/v1/session/${sessionId}/reset`, {
+    const response = await fetch(`http://localhost:5002/api/v1/session/${sessionId}/reset`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -89,7 +88,7 @@ const apiService = {
 
   // Get session
   getSession: async (sessionId: string) => {
-    const response = await fetch(`http://localhost:5000/api/v1/session/${sessionId}`, {
+    const response = await fetch(`http://localhost:5002/api/v1/session/${sessionId}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -102,7 +101,7 @@ const apiService = {
 const wsService = {
   connect: (sessionId: string, onMessage: (data: any) => void) => {
     // TODO: Implement WebSocket connection for real-time updates
-    // const ws = new WebSocket(`ws://localhost:5000/ws/session/${sessionId}`);
+    // const ws = new WebSocket(`ws://localhost:5002/ws/session/${sessionId}`);
     // ws.onmessage = (event) => onMessage(JSON.parse(event.data));
     
     // For now, we'll use polling as fallback
@@ -210,61 +209,12 @@ export function useSession() {
     } catch (error) {
       console.error('Error submitting prompt:', error);
       
-      // Fallback to mock implementation if backend fails
-      try {
-        const responses = await Promise.all(
-          session.enabledProviders.map(async (provider) => {
-            // TODO: Uncomment when backend is connected
-            // return generateMockResponse(
-            //   provider,
-            //   prompt,
-            //   session.conversationHistory,
-            //   (update) => {
-            //     setSession(prev => ({
-            //       ...prev,
-            //       currentResponses: prev.currentResponses.map(r =>
-            //         r.provider === provider ? { ...r, ...update } : r
-            //       ),
-            //     }));
-            //   }
-            // );
-            
-            // Fallback response
-            return {
-              id: generateId(),
-              provider,
-              prompt,
-              response: `Mock response from ${provider} provider`,
-              status: 'success' as const,
-              metrics: {
-                latencyMs: 1000,
-                tokenCount: 50,
-                responseLength: 200,
-                firstTokenLatencyMs: 200,
-                tokensPerSecond: 50,
-              },
-              retryCount: 0,
-              errorMessage: null,
-              streamingProgress: 100,
-              timestamp: Date.now(),
-              isStreaming: false,
-            };
-          })
-        );
-        
-        setSession(prev => ({
-          ...prev,
-          isProcessing: false,
-          currentResponses: responses,
-        }));
-      } catch (mockError) {
-        console.error('Mock API also failed:', mockError);
-        setSession(prev => ({
-          ...prev,
-          isProcessing: false,
-          currentResponses: [],
-        }));
-      }
+      // Show error message and keep responses empty
+      setSession(prev => ({
+        ...prev,
+        isProcessing: false,
+        currentResponses: [],
+      }));
     }
   }, [session.id, session.isProcessing, session.enabledProviders, session.conversationHistory]);
 
@@ -379,61 +329,8 @@ export function useSession() {
     } catch (error) {
       console.error('Error retrying provider:', error);
       
-      // Fallback to local implementation if backend fails
-      const response = session.currentResponses.find(r => r.provider === providerId);
-      if (!response) return;
-
-      setSession(prev => ({
-        ...prev,
-        currentResponses: prev.currentResponses.map(r =>
-          r.provider === providerId
-            ? { ...r, status: 'pending', retryCount: r.retryCount + 1, errorMessage: null }
-            : r
-        ),
-      }));
-
-      // TODO: Uncomment when backend is connected
-      // const newResponse = await generateMockResponse(
-      //   providerId,
-      //   session.currentPrompt,
-      //   session.conversationHistory,
-      //   (update) => {
-      //     setSession(prev => ({
-      //       ...prev,
-      //       currentResponses: prev.currentResponses.map(r =>
-      //         r.provider === providerId ? { ...r, ...update } : r
-      //       ),
-      //     }));
-      //   }
-      // );
-      
-      // Fallback response
-      const newResponse = {
-        id: response.id,
-        provider: providerId,
-        prompt: session.currentPrompt,
-        response: `Retry response from ${providerId} provider`,
-        status: 'success' as const,
-        metrics: {
-          latencyMs: 1000,
-          tokenCount: 50,
-          responseLength: 200,
-          firstTokenLatencyMs: 200,
-          tokensPerSecond: 50,
-        },
-        retryCount: response.retryCount + 1,
-        errorMessage: null,
-        streamingProgress: 100,
-        timestamp: Date.now(),
-        isStreaming: false,
-      };
-
-      setSession(prev => ({
-        ...prev,
-        currentResponses: prev.currentResponses.map(r =>
-          r.provider === providerId ? newResponse : r
-        ),
-      }));
+      // Simply return without fallback response generation
+      return;
     }
   }, [session.id, session.currentPrompt, session.currentResponses, session.conversationHistory]);
 
