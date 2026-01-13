@@ -80,13 +80,14 @@ ResponseRally/
 The frontend is built with React, TypeScript, and Vite, featuring:
 
 ### Key Components
-- **Header.tsx**: Application header with theme toggle (sun/moon icons) and session controls
+- **Header.tsx**: Application header with theme toggle (sun/moon icons), Export and Flow icons, and session controls
 - **useSession.ts**: Centralized session state management hook that handles all AI comparison logic
 - **ResponseGrid.tsx**: Horizontal scrolling grid for displaying multiple AI responses
 - **ResponseCard.tsx**: Individual response cards with metrics and selection functionality
 - **PromptInput.tsx**: Input component with provider toggling capabilities
 - **MetricsPanel.tsx**: Performance metrics display (latency, tokens, etc.)
 - **ComprehensiveMetricsMatrix.tsx**: Detailed metrics matrix display with expanded metrics (latency, tokens, efficiency, etc.)
+- **ConversationHistory.tsx**: Scrollable conversation history display with vertical scrolling for better UX
 
 ### Styling & Themes
 - **index.css**: Defines CSS variables for both dark and light themes
@@ -191,10 +192,11 @@ This clear division ensures that:
 ## Features
 - Multi-provider AI response comparison
 - Real-time streaming display with performance metrics
-- Conversation context management
+- Conversation context management with scrollable history
 - Provider management and toggling
 - Error handling with retry functionality
 - Dark/Light theme with smooth transitions
+- Enhanced header with Export and Flow icons
 - Responsive design for all screen sizes
 - Session persistence and management
 - Ready for backend integration
