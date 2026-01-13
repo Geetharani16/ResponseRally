@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useSession } from '@/hooks/useSession';
 import { Header } from '@/components/Header';
 import { PromptInput } from '@/components/PromptInput';
 import { ResponseGrid } from '@/components/ResponseGrid';
 import { ConversationHistory } from '@/components/ConversationHistory';
-import { JsonResponsePanel } from '@/components/JsonResponsePanel';
 import { cn } from '@/lib/utils';
 
 /**
@@ -39,8 +38,6 @@ const Index: React.FC = () => {
     resetSession,
     retryProvider,
   } = useSession();
-
-  const [showJsonPanel, setShowJsonPanel] = useState(false);
 
   const hasCurrentResponses = session.currentResponses.length > 0;
   const hasHistory = session.conversationHistory.length > 0;
@@ -166,13 +163,6 @@ const Index: React.FC = () => {
           </p>
         </div>
       </footer>
-
-      {/* JSON Response Panel */}
-      <JsonResponsePanel 
-        responseData={session}
-        isOpen={showJsonPanel}
-        onToggle={() => setShowJsonPanel(!showJsonPanel)}
-      />
     </div>
   );
 };
