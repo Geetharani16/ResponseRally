@@ -15,12 +15,7 @@ const providers = {
     apiKeyEnv: 'DEEPSEEK_API_KEY',
     model: 'xiaomi/mimo-v2-flash:free'  // Using OpenRouter's free Xiaomi model
   },
-  ollama: {
-    name: 'Ollama Gemma3 1B',
-    baseUrl: 'http://localhost:11434/api',
-    apiKeyEnv: null,  // Ollama doesn't require API key
-    model: 'gemma3:1b'
-  },
+
   llama: {
     name: 'Llama 3.3 70B Instruct Free (via OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
@@ -67,21 +62,14 @@ const callProviderAPI = async (providerId, prompt, context = []) => {
   let url;
   let headers;
 
-  // Handle Ollama specially (doesn't require API key)
-  if (providerId === 'ollama') {
-    headers = {
-      'Content-Type': 'application/json',
-    };
-  } else {
-    const apiKey = process.env[provider.apiKeyEnv];
-    if (!apiKey) {
-      throw new Error(`Missing API key for ${provider.name}. Please set ${provider.apiKeyEnv} in environment variables.`);
-    }
-    headers = {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    };
+  const apiKey = process.env[provider.apiKeyEnv];
+  if (!apiKey) {
+    throw new Error(`Missing API key for ${provider.name}. Please set ${provider.apiKeyEnv} in environment variables.`);
   }
+  headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json'
+  };
 
   switch (providerId) {
     case 'gpt':
@@ -155,24 +143,7 @@ const callProviderAPI = async (providerId, prompt, context = []) => {
       };
       break;
 
-    case 'ollama':
-      // Ollama provider-specific implementation
-      url = `${provider.baseUrl}/chat`;  // Ollama uses /api/chat endpoint
-      requestData = {
-        model: provider.model,
-        messages: [
-          ...context.map(ctx => ({ role: 'user', content: ctx.userPrompt })),
-          { role: 'user', content: prompt }
-        ],
-        stream: true,  // Ollama supports streaming
-        options: {
-          temperature: 0.7,
-        }
-      };
-      headers = {
-        'Content-Type': 'application/json',
-      };
-      break;
+
     
     case 'deepseek':
       // DeepSeek provider-specific implementation (using OpenRouter)
@@ -224,119 +195,7 @@ const processProviderResponse = async (providerId, prompt, context = [], onRespo
     let accumulatedResponse = '';
     let tokenCount = 0;
 
-    // Handle Ollama separately since it requires different streaming implementation
-    if (providerId === 'ollama') {
-      // Get the provider configuration
-      const provider = providers[providerId];
-      
-      // Prepare the request payload for Ollama
-      const requestData = {
-        model: provider.model,
-        messages: [
-          ...context.map(ctx => ({ role: 'user', content: ctx.userPrompt })),
-          { role: 'user', content: prompt }
-        ],
-        stream: true,  // Ollama supports streaming
-        options: {
-          temperature: 0.7,
-        }
-      };
-      
-      const url = `${provider.baseUrl}/chat`;
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      
-      // Handle Ollama streaming response using axios
-      try {
-        const responseStream = await axios.post(url, requestData, {
-          headers,
-          responseType: 'stream'  // Axios supports streaming
-        });
-        
-        return new Promise((resolve, reject) => {
-          let buffer = '';
-          
-          responseStream.data.on('data', (chunk) => {
-            buffer += chunk.toString();
-            
-            // Process complete lines
-            let lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // Keep incomplete line
-            
-            for (const line of lines) {
-              if (line.trim() === '') continue;
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.substring(6)); // Remove 'data: ' prefix
-                  
-                  if (data.done) {
-                    // Stream completed
-                    responseStream.data.emit('close');
-                    break;
-                  }
-                  
-                  if (data.message && data.message.content) {
-                    const content = data.message.content;
-                    accumulatedResponse += content;
-                    tokenCount += content.length / 4; // Approximate token count
-                    
-                    if (!firstTokenTime) firstTokenTime = Date.now();
-                    
-                    const currentTime = Date.now();
-                    const latencyMs = currentTime - startTime;
-                    const responseLength = accumulatedResponse.length;
-                    const firstTokenLatencyMs = firstTokenTime - startTime;
-                    const tokensPerSecond = tokenCount / ((currentTime - startTime) / 1000);
-                    
-                    // Call the update function with progress
-                    onResponseUpdate({
-                      response: accumulatedResponse,
-                      status: 'streaming',
-                      isStreaming: true,
-                      streamingProgress: Math.min(100, Math.round((responseLength / 1000) * 100)), // Estimate progress
-                      metrics: {
-                        latencyMs,
-                        tokenCount: Math.floor(tokenCount),
-                        responseLength,
-                        firstTokenLatencyMs,
-                        tokensPerSecond: isNaN(tokensPerSecond) ? 0 : tokensPerSecond
-                      }
-                    });
-                  }
-                } catch (e) {
-                  console.error('Error parsing Ollama SSE data:', e);
-                }
-              }
-            }
-          });
-          
-          responseStream.data.on('end', () => {
-            resolve({
-              response: accumulatedResponse,
-              status: 'success',
-              isStreaming: false,
-              streamingProgress: 100,
-              metrics: {
-                latencyMs: Date.now() - startTime,
-                tokenCount: Math.floor(tokenCount),
-                responseLength: accumulatedResponse.length,
-                firstTokenLatencyMs: firstTokenTime - startTime,
-                tokensPerSecond: tokenCount / ((Date.now() - startTime) / 1000)
-              }
-            });
-          });
-          
-          responseStream.data.on('error', (error) => {
-            console.error('Ollama stream error:', error);
-            reject(error);
-          });
-        });
-      } catch (streamError) {
-        console.error('Error in Ollama streaming:', streamError);
-        throw streamError;
-      }
-    } else {
+    {
       // Handle streaming for other providers (GPT, Mistral, Gemini, etc.) properly
       const provider = providers[providerId];
       const apiKey = process.env[provider.apiKeyEnv];
@@ -599,13 +458,10 @@ const validateProviderKeys = () => {
   Object.keys(providers).forEach(providerId => {
     const provider = providers[providerId];
     
-    // Skip validation for providers that don't require API keys (like Ollama)
-    if (provider.apiKeyEnv !== null) {
-      const apiKey = process.env[provider.apiKeyEnv];
-      
-      if (!apiKey) {
-        missingKeys.push(provider.apiKeyEnv);
-      }
+    const apiKey = process.env[provider.apiKeyEnv];
+    
+    if (!apiKey) {
+      missingKeys.push(provider.apiKeyEnv);
     }
   });
   

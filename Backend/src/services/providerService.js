@@ -16,7 +16,7 @@ class ProviderService {
       gemini: this.geminiProvider.bind(this),
       copilot: this.mockProvider.bind(this, 'copilot'),
       deepseek: this.deepseekProvider.bind(this),
-      ollama: this.mockProvider.bind(this, 'ollama')
+
     };
   }
 
@@ -752,75 +752,6 @@ class ProviderService {
           firstTokenLatencyMs: 100,
           tokensPerSecond: fallbackResponse.split(' ').length / 0.5
         }
-      });
-    }
-  }
-  
-  async ollamaProvider(sessionId, prompt, context) {
-    const session = sessionService.getSession(sessionId);
-    if (!session) return;
-    
-    try {
-      // Update to streaming
-      this.updateResponseStatus(sessionId, 'ollama', {
-        status: 'streaming',
-        isStreaming: true,
-        streamingProgress: 10
-      });
-      
-      const startTime = Date.now();
-      
-      // Call local Ollama API
-      const response = await fetch(`${process.env.OLLAMA_BASE_URL || 'http://localhost:11434'}/api/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: process.env.OLLAMA_DEFAULT_MODEL || 'llama2',
-          prompt: prompt,
-          stream: false
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      const aiResponse = data.response;
-      
-      // Update progress to 100%
-      this.updateResponseStatus(sessionId, 'ollama', {
-        response: aiResponse,
-        streamingProgress: 100
-      });
-      
-      const endTime = Date.now();
-      
-      // Final update
-      this.updateResponseStatus(sessionId, 'ollama', {
-        status: 'success',
-        response: aiResponse,
-        metrics: {
-          latencyMs: endTime - startTime,
-          tokenCount: aiResponse.split(' ').length, // Ollama doesn't provide exact token count
-          responseLength: aiResponse.length,
-          firstTokenLatencyMs: 250, // Local model might take longer initially
-          tokensPerSecond: (aiResponse.split(' ').length / ((endTime - startTime) / 1000))
-        },
-        streamingProgress: 100,
-        isStreaming: false,
-        timestamp: endTime
-      });
-      
-    } catch (error) {
-      console.error('Ollama API error:', error);
-      this.updateResponseStatus(sessionId, 'ollama', {
-        status: 'error',
-        errorMessage: error.message,
-        isStreaming: false,
-        streamingProgress: 0
       });
     }
   }

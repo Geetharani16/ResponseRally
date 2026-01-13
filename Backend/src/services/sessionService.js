@@ -5,7 +5,7 @@ const sessions = new Map();
 
 const DEFAULT_PROVIDERS = [
   'gpt', 'llama', 'mistral', 'gemini', 
-  'copilot', 'deepseek', 'ollama'
+  'copilot', 'deepseek'
 ];
 
 class SessionService {

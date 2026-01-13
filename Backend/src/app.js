@@ -7,7 +7,7 @@ const rateLimit = require('express-rate-limit');
 
 const sessionRoutes = require('./routes/sessionRoutes');
 const promptRoutes = require('./routes/promptRoutes');
-const ollamaRoutes = require('./routes/ollamaRoutes');
+
 const healthRoutes = require('./routes/healthRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -40,7 +40,7 @@ app.use(morgan('combined'));
 // Routes
 app.use('/api/v1/session', sessionRoutes);
 app.use('/api/v1/prompt', promptRoutes);
-app.use('/api/v1/ollama', ollamaRoutes);
+
 app.use('/health', healthRoutes);
 
 // Error handling
