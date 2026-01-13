@@ -412,10 +412,12 @@ class ProviderService {
     } catch (error) {
       console.error('Gemini API error:', error);
       
-      // Check if it's an authentication or balance issue
+      // Check if it's an authentication, rate limit, or balance issue
       let errorMessage = error.message;
       if (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')) {
         errorMessage = 'Gemini API: Invalid API key or unauthorized access. Please check your API key.';
+      } else if (error.message.includes('429') || error.message.toLowerCase().includes('too many requests') || error.message.toLowerCase().includes('rate limit')) {
+        errorMessage = 'Gemini API: Rate limit exceeded. Too many requests. Please try again shortly.';
       } else if (error.message.toLowerCase().includes('balance') || error.message.toLowerCase().includes('insufficient')) {
         errorMessage = 'Gemini API: Insufficient balance. Your API key may have reached its usage limit.';
       } else if (error.message.includes('404') || error.message.includes('model')) {
