@@ -530,19 +530,24 @@ class ProviderService {
       
       const startTime = Date.now();
       
-      // Call real DeepSeek API (using OpenAI-compatible endpoint)
-      const response = await fetch('https://api.deepseek.com/chat/completions', {
+      // Call real DeepSeek API via OpenRouter
+      const apiKey = process.env.GOOGLE_API_KEY; // Use the same OpenRouter key for both Gemini and DeepSeek
+      
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-          'Accept': 'application/json'
+          'HTTP-Referer': 'http://localhost:5768',
+          'X-Title': 'ResponseRally'
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [{ role: 'user', content: prompt }],
-          stream: false,
-          temperature: 0.7
+          model: 'tngtech/deepseek-r1t2-chimera:free',
+          messages: [
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
         })
       });
       
@@ -593,10 +598,12 @@ class ProviderService {
     } catch (error) {
       console.error('DeepSeek API error:', error);
       
-      // Check if it's an authentication or balance issue
+      // Check if it's an authentication, rate limit, or balance issue
       let errorMessage = error.message;
       if (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')) {
         errorMessage = 'DeepSeek API: Invalid API key or unauthorized access. Please check your API key.';
+      } else if (error.message.includes('429') || error.message.toLowerCase().includes('too many requests') || error.message.toLowerCase().includes('rate limit')) {
+        errorMessage = 'DeepSeek API: Rate limit exceeded. Too many requests. Please try again shortly.';
       } else if (error.message.toLowerCase().includes('balance') || error.message.toLowerCase().includes('insufficient')) {
         errorMessage = 'DeepSeek API: Insufficient balance. Your API key may have reached its usage limit.';
       } else if (error.message.includes('404') || error.message.includes('model')) {
