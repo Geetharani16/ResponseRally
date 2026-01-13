@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Sparkles, Sun, Moon } from 'lucide-react';
+import { Sparkles, Sun, Moon, Workflow, Upload } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 interface HeaderProps {
@@ -34,6 +34,28 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
+            <button
+              className={cn(
+                'text-sm text-muted-foreground hover:text-foreground',
+                'p-2 rounded-lg hover:bg-muted/50',
+                'transition-colors duration-200',
+                'flex items-center justify-center'
+              )}
+              aria-label="Export"
+            >
+              <Upload className="w-4 h-4" />
+            </button>
+            <button
+              className={cn(
+                'text-sm text-muted-foreground hover:text-foreground',
+                'p-2 rounded-lg hover:bg-muted/50',
+                'transition-colors duration-200',
+                'flex items-center justify-center'
+              )}
+              aria-label="Flow chat"
+            >
+              <Workflow className="w-4 h-4" />
+            </button>
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className={cn(

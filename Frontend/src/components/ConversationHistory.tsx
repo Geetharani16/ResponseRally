@@ -22,7 +22,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({ turns 
         </span>
       </h3>
       
-      <div className="space-y-3">
+      <div className="max-h-[50vh] overflow-y-auto pr-2 -mr-2 space-y-3">
         {turns.map((turn) => (
           <div key={turn.id} className="space-y-2 animate-fade-in">
             {/* User Prompt */}
