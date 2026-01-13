@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Zap, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { ServerStatusIndicator } from '@/components/ServerStatusIndicator';
 
 interface HeaderProps {
   onReset: () => void;
@@ -56,6 +57,8 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
             >
               New Session
             </button>
+            
+            <ServerStatusIndicator />
             
             {/**
              * =====================================================
