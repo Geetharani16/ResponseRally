@@ -10,10 +10,10 @@ const axios = require('axios');
 // Provider API configurations
 const providers = {
   gpt: {
-    name: 'OpenAI GPT-4',
-    baseUrl: 'https://api.openai.com/v1',
-    apiKeyEnv: 'OPENAI_API_KEY',
-    model: 'gpt-4'
+    name: 'Xiaomi MiMo (via OpenRouter)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    model: 'xiaomi/mimo-v2-flash:free'  // Using OpenRouter's free Xiaomi model
   },
   ollama: {
     name: 'Ollama Gemma3 1B',
@@ -22,10 +22,10 @@ const providers = {
     model: 'gemma3:1b'
   },
   llama: {
-    name: 'Meta LLaMA',
-    baseUrl: 'https://api.llama.ai/v1', // Placeholder URL
-    apiKeyEnv: 'LLAMA_API_KEY',
-    model: 'llama-3-70b'
+    name: 'Llama 3.3 70B Instruct Free (via OpenRouter)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    model: 'meta-llama/llama-3.3-70b-instruct:free'  // Using OpenRouter's free Llama model
   },
   mistral: {
     name: 'Mistral AI',
@@ -36,14 +36,14 @@ const providers = {
   gemini: {
     name: 'Google Gemini 3 Flash Preview (via OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
-    apiKeyEnv: 'GOOGLE_API_KEY',
-    model: 'google/gemini-2.0-flash-exp:free'  // Using OpenRouter's free model identifier
+    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    model: 'mistralai/devstral-2512:free'  // Using OpenRouter's free model identifier
   },
   copilot: {
     name: 'Microsoft Copilot',
-    baseUrl: 'https://api.copilottest.com/v1', // Placeholder URL
-    apiKeyEnv: 'COPILOT_API_KEY',
-    model: 'copilot-model'
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    model: 'nvidia/nemotron-3-nano-30b-a3b:free'  // Using OpenRouter's free model identifier
   },
   deepseek: {
     name: 'DeepSeek R1T2 Chimera Free (via OpenRouter)',
