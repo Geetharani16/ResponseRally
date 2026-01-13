@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Sparkles, Sun, Moon, Workflow, Upload } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import ConversationFlowDialog from '@/components/ConversationFlowDialog';
 
 interface HeaderProps {
   onReset: () => void;
+  session: import('@/types').SessionState;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onReset }) => {
+export const Header: React.FC<HeaderProps> = ({ onReset, session }) => {
   const { theme, setTheme } = useTheme();
+  const [showFlowDialog, setShowFlowDialog] = useState(false);
 
   return (
     <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
@@ -53,9 +56,16 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
                 'flex items-center justify-center'
               )}
               aria-label="Flow chat"
+              onClick={() => setShowFlowDialog(true)}
             >
               <Workflow className="w-4 h-4" />
             </button>
+            
+            <ConversationFlowDialog 
+              isOpen={showFlowDialog}
+              onClose={() => setShowFlowDialog(false)} 
+              session={session}
+            />
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className={cn(

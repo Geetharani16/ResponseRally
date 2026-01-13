@@ -44,7 +44,7 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onReset={resetSession} />
+      <Header onReset={resetSession} session={session} />
 
       <main className="max-w-[1800px] mx-auto px-6 py-8">
         <div className="space-y-8">
