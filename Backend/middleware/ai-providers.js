@@ -37,7 +37,7 @@ const providers = {
     name: 'Google Gemini 3 Flash Preview (via OpenRouter)',
     baseUrl: 'https://openrouter.ai/api/v1',
     apiKeyEnv: 'GOOGLE_API_KEY',
-    model: 'google/gemini-3-flash-preview'  // Using OpenRouter's model identifier
+    model: 'google/gemini-2.0-flash-exp:free'  // Using OpenRouter's free model identifier
   },
   copilot: {
     name: 'Microsoft Copilot',
