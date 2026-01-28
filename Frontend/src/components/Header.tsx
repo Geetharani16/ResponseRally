@@ -8,9 +8,10 @@ import ExportDialog from '@/components/ExportDialog';
 interface HeaderProps {
   onReset: () => void;
   session: import('@/types').SessionState;
+  onLogout?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onReset, session }) => {
+export const Header: React.FC<HeaderProps> = ({ onReset, session, onLogout }) => {
   const { theme, setTheme } = useTheme();
   const [showFlowDialog, setShowFlowDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -39,6 +40,20 @@ export const Header: React.FC<HeaderProps> = ({ onReset, session }) => {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
+            {/* Logout Button - Only show if onLogout is provided */}
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className={cn(
+                  'text-sm text-muted-foreground hover:text-foreground',
+                  'px-3 py-1.5 rounded-lg hover:bg-muted/50',
+                  'transition-colors duration-200'
+                )}
+              >
+                Logout
+              </button>
+            )}
+
             <button
               className={cn(
                 'text-sm text-muted-foreground hover:text-foreground',

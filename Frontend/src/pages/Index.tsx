@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSession } from '@/hooks/useSession';
 import { Header } from '@/components/Header';
 import { PromptInput } from '@/components/PromptInput';
 import { ResponseGrid } from '@/components/ResponseGrid';
 import { ConversationHistory } from '@/components/ConversationHistory';
 import { cn } from '@/lib/utils';
+import { AuthModal } from '@/components/AuthModal';
 
 /**
  * =====================================================
@@ -42,9 +43,49 @@ const Index: React.FC = () => {
   const hasCurrentResponses = session.currentResponses.length > 0;
   const hasHistory = session.conversationHistory.length > 0;
 
+  // Add authentication state with localStorage persistence
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
+  const [showAuthModal, setShowAuthModal] = useState(() => {
+    return localStorage.getItem('isAuthenticated') !== 'true';
+  });
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+    localStorage.setItem('isAuthenticated', 'true');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setShowAuthModal(true);
+    localStorage.removeItem('isAuthenticated');
+  };
+
+  // If not authenticated, show auth modal
+  if (!isAuthenticated && showAuthModal) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => {}}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <Header onReset={resetSession} session={session} />
+      {/* Auth Modal - can be shown again on logout */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      <Header onReset={resetSession} session={session} onLogout={handleLogout} />
 
       <main className="max-w-[1800px] mx-auto px-6 py-8">
         <div className="space-y-8">
