@@ -130,6 +130,19 @@ const initializeSession = async (): Promise<SessionState> => {
   }
 };
 
+// Function to load a stored conversation into session
+const loadStoredConversation = (storedConversation: any): SessionState => {
+  return {
+    id: storedConversation.id.replace('conv_', ''),
+    conversationHistory: storedConversation.turns,
+    currentPrompt: '',
+    currentResponses: [],
+    isProcessing: false,
+    selectedResponseId: null,
+    enabledProviders: ['gpt', 'llama', 'mistral', 'gemini', 'copilot', 'deepseek'],
+  };
+};
+
 export function useSession() {
   const [session, setSession] = useState<SessionState>(createInitialSession);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -147,6 +160,27 @@ export function useSession() {
     };
     
     initSession();
+  }, []);
+
+  // Listen for conversation load events
+  useEffect(() => {
+    const handleLoadConversation = (event: CustomEvent) => {
+      const storedConversation = event.detail;
+      const loadedSession = loadStoredConversation(storedConversation);
+      setSession(loadedSession);
+    };
+
+    const handleNewSession = () => {
+      setSession(createInitialSession());
+    };
+
+    window.addEventListener('rr-load-conversation', handleLoadConversation as EventListener);
+    window.addEventListener('rr-new-session', handleNewSession);
+    
+    return () => {
+      window.removeEventListener('rr-load-conversation', handleLoadConversation as EventListener);
+      window.removeEventListener('rr-new-session', handleNewSession);
+    };
   }, []);
 
   /**

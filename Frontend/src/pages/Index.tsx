@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from '@/hooks/useSession';
 import { Header } from '@/components/Header';
 import { PromptInput } from '@/components/PromptInput';
@@ -62,6 +62,18 @@ const Index: React.FC = () => {
     setShowAuthModal(true);
     localStorage.removeItem('isAuthenticated');
   };
+
+  // Handle new conversation event
+  useEffect(() => {
+    const handleNewConversation = () => {
+      resetSession();
+    };
+
+    window.addEventListener('rr-new-session', handleNewConversation);
+    return () => {
+      window.removeEventListener('rr-new-session', handleNewConversation);
+    };
+  }, [resetSession]);
 
   // If not authenticated, show auth modal
   if (!isAuthenticated && showAuthModal) {
