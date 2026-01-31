@@ -122,7 +122,16 @@ const wsService = {
 const initializeSession = async (): Promise<SessionState> => {
   try {
     // Try to create a new session via backend
-    return await apiService.createSession();
+    const sessionData = await apiService.createSession();
+    
+    // Store the userId in localStorage if it exists
+    if (sessionData.userId) {
+      localStorage.setItem('userId', sessionData.userId);
+      console.log('Stored userId in localStorage:', sessionData.userId);
+      console.log('Session data received:', sessionData);
+    }
+    
+    return sessionData;
   } catch (error) {
     console.error('Backend connection failed, falling back to local session:', error);
     // Fallback to local session if backend is not available

@@ -44,6 +44,7 @@ export interface ConversationTurn {
 
 export interface SessionState {
   id: string;
+  userId?: string; // Optional userId from backend
   conversationHistory: ConversationTurn[];
   currentPrompt: string;
   currentResponses: ProviderResponse[];
@@ -62,3 +63,49 @@ export const PROVIDERS: ProviderConfig[] = [
   { id: 'deepseek', name: 'DeepSeek', displayName: 'DeepSeek', color: 'provider-deepseek', enabled: true },
 
 ];
+
+// Dashboard Types
+export interface ProviderStats {
+  provider: ProviderType;
+  totalResponses: number;
+  successfulResponses: number;
+  errorResponses: number;
+  avgLatency: number;
+  avgTokens: number;
+  avgResponseLength: number;
+  totalTokens: number;
+  selectionRate: number;
+  successRate: number;
+  avgFirstTokenLatency: number;
+  avgTokensPerSecond: number;
+  totalRetries: number;
+}
+
+export interface OverallStats {
+  totalConversations: number;
+  totalPrompts: number;
+  totalResponses: number;
+  successfulResponses: number;
+  errorResponses: number;
+  avgLatency: number;
+  avgTokens: number;
+  avgResponseLength: number;
+  mostSelectedProvider: ProviderType | null;
+  fastestProvider: ProviderType | null;
+  mostReliableProvider: ProviderType | null;
+  totalTokensGenerated: number;
+  avgTokensPerSecond: number;
+  totalRetries: number;
+}
+
+export interface DashboardData {
+  overallStats: OverallStats;
+  providerStats: ProviderStats[];
+  recentConversations: ConversationTurn[];
+  performanceTrends: {
+    date: string;
+    avgLatency: number;
+    successRate: number;
+    totalResponses: number;
+  }[];
+}

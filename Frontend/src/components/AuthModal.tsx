@@ -119,6 +119,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
       const data = await response.json();
       
       if (response.ok) {
+        // Store user data in localStorage
+        localStorage.setItem('userEmail', email);
+        localStorage.setItem('username', formData.name || email.split('@')[0]);
+        localStorage.setItem('userId', data.userId || 'default-user');
         onAuthSuccess();
       } else {
         alert(data.error || 'Invalid OTP');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { X, MessageCircle, Clock, Trash2, Plus, User, Search, LogOut, Edit3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ConversationTurn } from '@/types';
 
 interface StoredConversation {
@@ -27,6 +28,7 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
   onLogout,
   currentSession
 }) => {
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<StoredConversation[]>([]);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
@@ -191,8 +193,9 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
   };
 
   const handleUserProfile = () => {
-    // Navigate to user profile page
-    window.location.href = '/profile'; // Or use router navigation
+    // Navigate to profile page
+    navigate('/profile');
+    onClose(); // Close the panel after navigation
   };
 
   const formatDate = (timestamp: number) => {

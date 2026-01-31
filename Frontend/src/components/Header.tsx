@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Sparkles, Sun, Moon, Workflow, Upload, Plus } from 'lucide-react';
+import { Sparkles, Sun, Moon, Workflow, Upload, MessageCircle } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useNavigate } from 'react-router-dom';
 import ConversationFlowDialog from '@/components/ConversationFlowDialog';
 import ExportDialog from '@/components/ExportDialog';
 import { ConversationHistoryPanel } from '@/components/ConversationHistoryPanel';
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onReset, session, onLogout }) => {
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
   const [showFlowDialog, setShowFlowDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
@@ -80,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({ onReset, session, onLogout }) =>
               )}
               aria-label="New conversation"
             >
-              <Plus className="w-4 h-4" />
+              <MessageCircle className="w-4 h-4" />
             </button>
 
             <button
@@ -101,6 +103,8 @@ export const Header: React.FC<HeaderProps> = ({ onReset, session, onLogout }) =>
               onClose={() => setShowExportDialog(false)} 
               session={session}
             />
+
+            
             <button
               className={cn(
                 'text-sm text-muted-foreground hover:text-foreground',

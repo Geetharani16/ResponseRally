@@ -4,13 +4,25 @@ const { v4: uuidv4 } = require('uuid');
 exports.createSession = async (req, res, next) => {
   try {
     console.log(`\n>>> Creating new session at ${new Date().toISOString()} <<<`);
-    const session = await sessionService.createSession();
+    
+    // Generate a unique user ID for this session
+    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`>>> Generated User ID: ${userId}`);
+    
+    const session = await sessionService.createSession(userId);
     console.log(`>>> New session created successfully with ID: ${session.id}`);
+    console.log(`>>> Session userId field: ${session.userId}`);
     console.log(`>>> Enabled providers: ${session.enabledProviders.join(', ')}`);
     console.log(`>>> Session created at: ${session.createdAt}\n`);
-    res.status(201).json(session);
+    
+    // Return session with userId so frontend can store it
+    res.status(201).json({
+      ...session,
+      userId: userId
+    });
   } catch (error) {
     console.error('Error creating session:', error.message);
+    console.error('Error stack:', error.stack);
     next(error);
   }
 };

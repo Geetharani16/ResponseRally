@@ -1,6 +1,6 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const db = require('../database/db');
+const sessionService = require('../src/services/sessionService');
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ router.post('/:sessionId/select-response', async (req, res) => {
     const { sessionId } = req.params;
     const { responseId } = req.body;
     
-    let session = await db.getSession(sessionId);
+    let session = await sessionService.getSession(sessionId);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
@@ -35,7 +35,7 @@ router.post('/:sessionId/select-response', async (req, res) => {
     session.currentPrompt = '';
     session.updatedAt = new Date();
     
-    await db.updateSession(sessionId, session);
+    await sessionService.updateSession(sessionId, session);
     res.json(session);
   } catch (error) {
     console.error('Error selecting response:', error);
@@ -49,7 +49,7 @@ router.post('/:sessionId/toggle-provider', async (req, res) => {
     const { sessionId } = req.params;
     const { providerId } = req.body;
     
-    let session = await db.getSession(sessionId);
+    let session = await sessionService.getSession(sessionId);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
@@ -61,7 +61,7 @@ router.post('/:sessionId/toggle-provider', async (req, res) => {
     }
     
     session.updatedAt = new Date();
-    await db.updateSession(sessionId, session);
+    await sessionService.updateSession(sessionId, session);
     res.json(session);
   } catch (error) {
     console.error('Error toggling provider:', error);
@@ -75,7 +75,7 @@ router.post('/:sessionId/retry-provider', async (req, res) => {
     const { sessionId } = req.params;
     const { providerId } = req.body;
     
-    let session = await db.getSession(sessionId);
+    let session = await sessionService.getSession(sessionId);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
@@ -100,7 +100,7 @@ router.post('/:sessionId/retry-provider', async (req, res) => {
     session.currentResponses[responseIndex].streamingProgress = 100;
     
     session.updatedAt = new Date();
-    await db.updateSession(sessionId, session);
+    await sessionService.updateSession(sessionId, session);
     
     res.json(session);
   } catch (error) {

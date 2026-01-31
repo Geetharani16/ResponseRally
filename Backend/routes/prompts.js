@@ -1,7 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { processProviderResponse, validateProviderKeys } = require('../middleware/ai-providers');
-const db = require('../database/db');
+const sessionService = require('../src/services/sessionService');
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'sessionId and prompt are required' });
     }
     
-    let session = await db.getSession(sessionId);
+    let session = await sessionService.getSession(sessionId);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
     }));
     
     session.currentResponses = initialResponses;
-    await db.updateSession(sessionId, session);
+    await sessionService.updateSession(sessionId, session);
     
     // Process responses from different providers concurrently
     const responsePromises = initialResponses.map(async (response) => {
@@ -65,7 +65,7 @@ router.post('/', async (req, res) => {
           context || [],
           async (update) => {
             // Update response in real-time (this would typically use WebSockets or SSE)
-            let sessionToUpdate = await db.getSession(sessionId);
+            let sessionToUpdate = await sessionService.getSession(sessionId);
             if (sessionToUpdate) {
               const idx = sessionToUpdate.currentResponses.findIndex(r => r.id === response.id);
               if (idx !== -1) {
@@ -73,7 +73,7 @@ router.post('/', async (req, res) => {
                   ...sessionToUpdate.currentResponses[idx],
                   ...update
                 };
-                await db.updateSession(sessionId, sessionToUpdate);
+                await sessionService.updateSession(sessionId, sessionToUpdate);
               }
             }
           }
@@ -108,7 +108,7 @@ router.post('/', async (req, res) => {
     session.isProcessing = false;
     session.updatedAt = new Date();
     
-    await db.updateSession(sessionId, session);
+    await sessionService.updateSession(sessionId, session);
     res.json(session);
   } catch (error) {
     console.error('Error processing prompt:', error);

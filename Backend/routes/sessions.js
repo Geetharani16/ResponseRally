@@ -1,30 +1,28 @@
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database/db');
+const sessionService = require('../src/services/sessionService');
 
 const router = express.Router();
-
-// Helper function to create a new session
-const createSession = () => {
-  return {
-    id: uuidv4(),
-    conversationHistory: [],
-    currentPrompt: '',
-    currentResponses: [],
-    isProcessing: false,
-    selectedResponseId: null,
-    enabledProviders: ['gpt', 'llama', 'mistral', 'gemini', 'copilot', 'deepseek'],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
-};
 
 // Create a new session
 router.post('/', async (req, res) => {
   try {
-    const session = createSession();
-    await db.createSession(session);
-    res.status(201).json(session);
+    console.log(`\n>>> Creating new session via routes at ${new Date().toISOString()} <<<`);
+    
+    // Generate a unique user ID for this session
+    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`>>> Generated User ID: ${userId}`);
+    
+    const session = await sessionService.createSession(userId);
+    console.log(`>>> New session created successfully with ID: ${session.id}`);
+    console.log(`>>> Session userId field: ${session.userId}`);
+    console.log(`>>> Enabled providers: ${session.enabledProviders.join(', ')}`);
+    console.log(`>>> Session created at: ${session.createdAt}\n`);
+    
+    // Return session with userId so frontend can store it
+    res.status(201).json({
+      ...session,
+      userId: userId
+    });
   } catch (error) {
     console.error('Error creating session:', error);
     res.status(500).json({ error: 'Failed to create session' });
@@ -35,7 +33,7 @@ router.post('/', async (req, res) => {
 router.get('/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const session = await db.getSession(sessionId);
+    const session = await sessionService.getSession(sessionId);
     
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
@@ -53,17 +51,12 @@ router.post('/:sessionId/reset', async (req, res) => {
   try {
     const { sessionId } = req.params;
     
-    const session = await db.getSession(sessionId);
+    const session = await sessionService.resetSession(sessionId);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
     
-    // Create a new session object but keep the ID
-    const newSession = createSession();
-    newSession.id = sessionId; // Preserve the session ID
-    await db.updateSession(sessionId, newSession);
-    
-    res.json(newSession);
+    res.json(session);
   } catch (error) {
     console.error('Error resetting session:', error);
     res.status(500).json({ error: 'Failed to reset session' });
