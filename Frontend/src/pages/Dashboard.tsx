@@ -40,14 +40,21 @@ import {
   PROVIDERS
 } from '@/types';
 
-// Fetch real dashboard data from MongoDB
+// Fetch real dashboard data from MongoDB with enhanced error handling and validation
 const fetchDashboardData = async (userId: string): Promise<DashboardData> => {
   try {
+    console.log('Dashboard: Fetching data for userId:', userId);
     const data = await getDashboardData(userId);
-    return data;
+    
+    // Validate and sanitize the received data
+    const validatedData = validateDashboardData(data);
+    console.log('Dashboard: Data fetched and validated successfully:', validatedData);
+    
+    return validatedData;
   } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-    // Return empty data structure on error
+    console.error('Dashboard: Error fetching dashboard data:', error);
+    
+    // Return comprehensive error data structure
     return {
       overallStats: {
         totalConversations: 0,
@@ -72,6 +79,73 @@ const fetchDashboardData = async (userId: string): Promise<DashboardData> => {
   }
 };
 
+// Validate and sanitize dashboard data structure
+const validateDashboardData = (data: any): DashboardData => {
+  // Ensure data structure exists
+  if (!data) {
+    throw new Error('No data received from API');
+  }
+  
+  // Validate overallStats
+  const overallStats = {
+    totalConversations: Math.max(0, data.overallStats?.totalConversations || 0),
+    totalPrompts: Math.max(0, data.overallStats?.totalPrompts || 0),
+    totalResponses: Math.max(0, data.overallStats?.totalResponses || 0),
+    successfulResponses: Math.max(0, data.overallStats?.successfulResponses || 0),
+    errorResponses: Math.max(0, data.overallStats?.errorResponses || 0),
+    avgLatency: Math.max(0, data.overallStats?.avgLatency || 0),
+    avgTokens: Math.max(0, data.overallStats?.avgTokens || 0),
+    avgResponseLength: Math.max(0, data.overallStats?.avgResponseLength || 0),
+    mostSelectedProvider: data.overallStats?.mostSelectedProvider || 'gpt',
+    fastestProvider: data.overallStats?.fastestProvider || 'gpt',
+    mostReliableProvider: data.overallStats?.mostReliableProvider || 'gpt',
+    totalTokensGenerated: Math.max(0, data.overallStats?.totalTokensGenerated || 0),
+    avgTokensPerSecond: Math.max(0, data.overallStats?.avgTokensPerSecond || 0),
+    totalRetries: Math.max(0, data.overallStats?.totalRetries || 0)
+  };
+  
+  // Validate providerStats
+  const providerStats = Array.isArray(data.providerStats) 
+    ? data.providerStats.map((stat: any) => ({
+        provider: stat.provider || 'gpt',
+        totalResponses: Math.max(0, stat.totalResponses || 0),
+        successfulResponses: Math.max(0, stat.successfulResponses || 0),
+        errorResponses: Math.max(0, stat.errorResponses || 0),
+        avgLatency: Math.max(0, stat.avgLatency || 0),
+        avgTokens: Math.max(0, stat.avgTokens || 0),
+        avgResponseLength: Math.max(0, stat.avgResponseLength || 0),
+        totalTokens: Math.max(0, stat.totalTokens || 0),
+        selectionRate: Math.max(0, Math.min(1, stat.selectionRate || 0)),
+        successRate: Math.max(0, Math.min(1, stat.successRate || 0)),
+        avgFirstTokenLatency: Math.max(0, stat.avgFirstTokenLatency || 0),
+        avgTokensPerSecond: Math.max(0, stat.avgTokensPerSecond || 0),
+        totalRetries: Math.max(0, stat.totalRetries || 0)
+      }))
+    : [];
+  
+  // Validate performanceTrends
+  const performanceTrends = Array.isArray(data.performanceTrends)
+    ? data.performanceTrends.map((trend: any) => ({
+        date: trend.date || 'Unknown',
+        avgLatency: Math.max(0, trend.avgLatency || 0),
+        successRate: Math.max(0, Math.min(1, trend.successRate || 0)),
+        totalResponses: Math.max(0, trend.totalResponses || 0)
+      }))
+    : [];
+  
+  // Validate recentConversations
+  const recentConversations = Array.isArray(data.recentConversations)
+    ? data.recentConversations.slice(0, 10) // Limit to 10 most recent
+    : [];
+  
+  return {
+    overallStats,
+    providerStats,
+    recentConversations,
+    performanceTrends
+  };
+};
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -80,6 +154,31 @@ const Dashboard: React.FC = () => {
   const [email, setEmail] = useState('');
   const [joinDate, setJoinDate] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Refresh dashboard data
+  const refreshData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const userId = localStorage.getItem('userId') || 'default-user';
+      console.log('Dashboard: Refreshing data for userId:', userId);
+      
+      const data = await fetchDashboardData(userId);
+      console.log('Dashboard: Refreshed data:', data);
+      
+      if (data && data.overallStats) {
+        setDashboardData(data);
+      } else {
+        throw new Error('Invalid data received during refresh');
+      }
+    } catch (err) {
+      console.error('Dashboard: Error refreshing data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to refresh dashboard data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Load profile data from localStorage
   useEffect(() => {
@@ -92,25 +191,105 @@ const Dashboard: React.FC = () => {
     setJoinDate(new Date(storedJoinDate).toLocaleDateString());
   }, []);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     // Fetch real data from MongoDB
     const loadData = async () => {
-      const userId = localStorage.getItem('userId') || 'default-user';
-      console.log('Dashboard: Using userId from localStorage:', userId);
-      const data = await fetchDashboardData(userId);
-      console.log('Dashboard: Received data:', data);
-      setDashboardData(data);
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const userId = localStorage.getItem('userId') || 'default-user';
+        console.log('Dashboard: Using userId from localStorage:', userId);
+        
+        const data = await fetchDashboardData(userId);
+        console.log('Dashboard: Received data:', data);
+        
+        // Additional validation after fetch
+        if (!data || !data.overallStats) {
+          throw new Error('Invalid data structure received');
+        }
+        
+        setDashboardData(data);
+      } catch (err) {
+        console.error('Dashboard: Error loading data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        // Set empty data to show basic UI
+        setDashboardData({
+          overallStats: {
+            totalConversations: 0,
+            totalPrompts: 0,
+            totalResponses: 0,
+            successfulResponses: 0,
+            errorResponses: 0,
+            avgLatency: 0,
+            avgTokens: 0,
+            avgResponseLength: 0,
+            mostSelectedProvider: 'gpt',
+            fastestProvider: 'gpt',
+            mostReliableProvider: 'gpt',
+            totalTokensGenerated: 0,
+            avgTokensPerSecond: 0,
+            totalRetries: 0
+          },
+          providerStats: [],
+          recentConversations: [],
+          performanceTrends: []
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     loadData();
   }, []);
 
-  if (!dashboardData) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
+          <p className="text-muted-foreground">Loading dashboard data...</p>
+          <p className="text-xs text-muted-foreground mt-2">Fetching analytics from database</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md p-6 glass-card rounded-xl">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Unable to Load Dashboard</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors"
+            >
+              Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData || !dashboardData.overallStats) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">No dashboard data available</p>
         </div>
       </div>
     );
@@ -149,11 +328,12 @@ const Dashboard: React.FC = () => {
             
             <div className="flex items-center gap-2">
               <button
-                onClick={() => window.location.reload()}
-                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                onClick={refreshData}
+                disabled={isLoading}
+                className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Refresh dashboard"
               >
-                <RefreshCw className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                <RefreshCw className={`w-4 h-4 text-muted-foreground hover:text-foreground ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}

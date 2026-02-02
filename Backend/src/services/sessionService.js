@@ -161,45 +161,70 @@ class SessionService {
     return await this.db.sessions.find({ userId }).sort({ createdAt: -1 }).toArray();
   }
 
-  // Enhanced analytics for dashboard
+  // Enhanced analytics for dashboard with comprehensive error handling
   async getDashboardData(userId) {
     try {
+      console.log(`SessionService: Starting dashboard data generation for user: ${userId}`);
+      
+      // Validate userId
+      if (!userId || typeof userId !== 'string') {
+        throw new Error('Invalid userId provided');
+      }
+      
       // Get all user sessions
+      console.log(`SessionService: Fetching sessions for user: ${userId}`);
       const sessions = await this.db.sessions.find({ userId }).toArray();
+      console.log(`SessionService: Found ${sessions.length} sessions`);
       
       if (sessions.length === 0) {
+        console.log(`SessionService: No sessions found for user ${userId}, returning empty data`);
         return this.getEmptyDashboardData();
       }
 
       // Get all conversations for user
       const sessionIds = sessions.map(s => s.id);
+      console.log(`SessionService: Fetching conversations for ${sessionIds.length} sessions`);
       const conversations = await this.db.conversations.find({ 
         sessionId: { $in: sessionIds } 
       }).toArray();
+      console.log(`SessionService: Found ${conversations.length} conversations`);
 
       // Get all responses
       const conversationIds = conversations.map(c => c.id);
-      const responses = await this.db.responses.find({
-        conversationId: { $in: conversationIds }
-      }).toArray();
+      console.log(`SessionService: Fetching responses for ${conversationIds.length} conversations`);
+      const responses = conversationIds.length > 0 
+        ? await this.db.responses.find({
+            conversationId: { $in: conversationIds }
+          }).toArray()
+        : [];
+      console.log(`SessionService: Found ${responses.length} responses`);
 
       // Calculate overall stats
+      console.log('SessionService: Calculating overall statistics');
       const overallStats = this.calculateOverallStats(sessions, conversations, responses);
       
       // Calculate provider stats
+      console.log('SessionService: Calculating provider statistics');
       const providerStats = this.calculateProviderStats(responses);
       
       // Calculate performance trends (last 7 days)
+      console.log('SessionService: Calculating performance trends');
       const performanceTrends = this.calculatePerformanceTrends(responses);
 
-      return {
+      const dashboardData = {
         overallStats,
         providerStats,
         recentConversations: conversations.slice(-10), // Last 10 conversations
         performanceTrends
       };
+      
+      console.log(`SessionService: Dashboard data generation completed for user: ${userId}`);
+      console.log(`SessionService: Final stats - Conversations: ${overallStats.totalConversations}, Responses: ${overallStats.totalResponses}`);
+      
+      return dashboardData;
     } catch (error) {
-      console.error('Error generating dashboard data:', error);
+      console.error(`SessionService: Error generating dashboard data for user ${userId}:`, error);
+      console.error('SessionService: Error stack:', error.stack);
       return this.getEmptyDashboardData();
     }
   }
