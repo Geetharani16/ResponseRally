@@ -1,19 +1,19 @@
 const { v4: uuidv4 } = require('uuid');
-const Database = require('../../database/db');
+const db = require('../../database/db');
 
 const DEFAULT_PROVIDERS = [
-  'gpt', 'llama', 'mistral', 'gemini', 
+  'gpt', 'llama', 'mistral', 'gemini',
   'copilot', 'deepseek'
 ];
 
 class SessionService {
   constructor() {
-    this.db = new Database();
+    this.db = db;
   }
   async createSession(userId = null) {
     const sessionId = uuidv4();
     const now = new Date().toISOString();
-    
+
     const session = {
       id: sessionId,
       userId,
@@ -26,7 +26,7 @@ class SessionService {
       createdAt: now,
       updatedAt: now
     };
-    
+
     const createdSession = await this.db.createSession(session);
     return createdSession;
   }
@@ -38,9 +38,9 @@ class SessionService {
   async resetSession(sessionId) {
     const session = await this.db.getSession(sessionId);
     if (!session) return null;
-    
+
     const now = new Date().toISOString();
-    
+
     const resetSession = {
       conversationHistory: [],
       currentPrompt: '',
@@ -50,21 +50,21 @@ class SessionService {
       enabledProviders: [...DEFAULT_PROVIDERS],
       updatedAt: now
     };
-    
+
     return await this.db.updateSession(sessionId, resetSession);
   }
 
   async selectResponse(sessionId, responseId) {
     const session = await this.db.getSession(sessionId);
     if (!session) return null;
-    
+
     const response = session.currentResponses.find(r => r.id === responseId);
     if (!response) {
       throw new Error('Response not found');
     }
-    
+
     const now = new Date().toISOString();
-    
+
     // Create conversation turn
     const conversationTurn = {
       id: uuidv4(),
@@ -75,10 +75,10 @@ class SessionService {
       allResponses: [...session.currentResponses],
       timestamp: Date.now()
     };
-    
+
     // Save conversation to database
     await this.db.createConversation(conversationTurn);
-    
+
     // Save all responses individually to the responses collection with best response tagged
     for (const resp of session.currentResponses) {
       await this.db.createResponse({
@@ -88,7 +88,7 @@ class SessionService {
         createdAt: new Date()
       });
     }
-    
+
     // Update session
     const updatedSession = {
       conversationHistory: [...session.conversationHistory, conversationTurn],
@@ -98,10 +98,10 @@ class SessionService {
       selectedResponseId: responseId,
       updatedAt: now
     };
-    
+
     return await this.db.updateSession(sessionId, updatedSession);
   }
-  
+
   // Method to get all responses for a conversation with best response tagging
   async getConversationResponses(conversationId) {
     try {
@@ -111,30 +111,30 @@ class SessionService {
       throw error;
     }
   }
-  
+
   // Method to get all responses for a session
   async getSessionResponses(sessionId) {
     try {
       // First get all conversations for the session
       const conversations = await this.db.conversations.find({ sessionId }).toArray();
-      
+
       // Get conversation IDs
       const conversationIds = conversations.map(conv => conv.id);
-      
+
       // Get all responses for those conversations
       if (conversationIds.length === 0) {
         return [];
       }
-      
-      return await this.db.responses.find({ 
-        conversationId: { $in: conversationIds } 
+
+      return await this.db.responses.find({
+        conversationId: { $in: conversationIds }
       }).toArray();
     } catch (error) {
       console.error('Error getting session responses:', error);
       throw error;
     }
   }
-  
+
   // Method to get conversations by session (needed for analytics)
   async getConversationsBySession(sessionId) {
     try {
@@ -148,10 +148,10 @@ class SessionService {
   async toggleProvider(sessionId, providerId) {
     const session = await this.db.getSession(sessionId);
     if (!session) return null;
-    
+
     const now = new Date().toISOString();
     const enabledProviders = [...session.enabledProviders];
-    
+
     const index = enabledProviders.indexOf(providerId);
     if (index > -1) {
       // Remove provider
@@ -160,19 +160,19 @@ class SessionService {
       // Add provider
       enabledProviders.push(providerId);
     }
-    
+
     const updatedSession = {
       enabledProviders,
       updatedAt: now
     };
-    
+
     return await this.db.updateSession(sessionId, updatedSession);
   }
 
   async retryProvider(sessionId, providerId) {
     const session = await this.db.getSession(sessionId);
     if (!session) return null;
-    
+
     const now = new Date().toISOString();
     const updatedResponses = session.currentResponses.map(response => {
       if (response.provider === providerId) {
@@ -188,20 +188,20 @@ class SessionService {
       }
       return response;
     });
-    
+
     const updatedSession = {
       currentResponses: updatedResponses,
       updatedAt: now
     };
-    
+
     return await this.db.updateSession(sessionId, updatedSession);
   }
-  
+
   // Method to update a session directly (used by provider service)
   async updateSession(sessionId, sessionData) {
     const session = await this.db.getSession(sessionId);
     if (!session) return null;
-    
+
     return await this.db.updateSession(sessionId, sessionData);
   }
 
@@ -220,17 +220,17 @@ class SessionService {
       console.log(`SessionService: Starting dashboard data generation for user: ${userId}`);
       console.log(`SessionService: UserId type: ${typeof userId}`);
       console.log(`SessionService: UserId value: "${userId}"`);
-      
+
       // Validate userId
       if (!userId || typeof userId !== 'string') {
         throw new Error('Invalid userId provided');
       }
-      
+
       // Get all user sessions
       console.log(`SessionService: Fetching sessions for user: ${userId}`);
       const sessions = await this.db.sessions.find({ userId }).toArray();
       console.log(`SessionService: Found ${sessions.length} sessions`);
-      
+
       if (sessions.length === 0) {
         console.log(`SessionService: No sessions found for user ${userId}, returning empty data`);
         return this.getEmptyDashboardData();
@@ -239,29 +239,29 @@ class SessionService {
       // Get all conversations for user
       const sessionIds = sessions.map(s => s.id);
       console.log(`SessionService: Fetching conversations for ${sessionIds.length} sessions`);
-      const conversations = await this.db.conversations.find({ 
-        sessionId: { $in: sessionIds } 
+      const conversations = await this.db.conversations.find({
+        sessionId: { $in: sessionIds }
       }).toArray();
       console.log(`SessionService: Found ${conversations.length} conversations`);
 
       // Get all responses
       const conversationIds = conversations.map(c => c.id);
       console.log(`SessionService: Fetching responses for ${conversationIds.length} conversations`);
-      const responses = conversationIds.length > 0 
+      const responses = conversationIds.length > 0
         ? await this.db.responses.find({
-            conversationId: { $in: conversationIds }
-          }).toArray()
+          conversationId: { $in: conversationIds }
+        }).toArray()
         : [];
       console.log(`SessionService: Found ${responses.length} responses`);
 
       // Calculate overall stats
       console.log('SessionService: Calculating overall statistics');
       const overallStats = this.calculateOverallStats(sessions, conversations, responses);
-      
+
       // Calculate provider stats
       console.log('SessionService: Calculating provider statistics');
       const providerStats = this.calculateProviderStats(responses);
-      
+
       // Calculate performance trends (last 7 days)
       console.log('SessionService: Calculating performance trends');
       const performanceTrends = this.calculatePerformanceTrends(responses);
@@ -272,10 +272,10 @@ class SessionService {
         recentConversations: conversations.slice(-10), // Last 10 conversations
         performanceTrends
       };
-      
+
       console.log(`SessionService: Dashboard data generation completed for user: ${userId}`);
       console.log(`SessionService: Final stats - Conversations: ${overallStats.totalConversations}, Responses: ${overallStats.totalResponses}`);
-      
+
       return dashboardData;
     } catch (error) {
       console.error(`SessionService: Error generating dashboard data for user ${userId}:`, error);
@@ -312,15 +312,15 @@ class SessionService {
     const successfulResponses = responses.filter(r => r.status === 'success').length;
     const errorResponses = responses.filter(r => r.status === 'error' || r.status === 'rate-limited').length;
     const totalResponses = responses.length;
-    
-    const avgLatency = responses.length > 0 
+
+    const avgLatency = responses.length > 0
       ? responses.reduce((sum, r) => sum + (r.metrics?.latencyMs || 0), 0) / responses.length
       : 0;
-    
+
     const avgTokens = responses.length > 0
       ? responses.reduce((sum, r) => sum + (r.metrics?.tokenCount || 0), 0) / responses.length
       : 0;
-    
+
     const avgResponseLength = responses.length > 0
       ? responses.reduce((sum, r) => sum + (r.metrics?.responseLength || 0), 0) / responses.length
       : 0;
@@ -329,7 +329,7 @@ class SessionService {
     const avgTokensPerSecond = responses.length > 0
       ? responses.reduce((sum, r) => sum + (r.metrics?.tokensPerSecond || 0), 0) / responses.length
       : 0;
-    
+
     const totalRetries = responses.reduce((sum, r) => sum + (r.retryCount || 0), 0);
 
     // Find most selected provider
@@ -337,7 +337,7 @@ class SessionService {
     responses.forEach(r => {
       providerCounts[r.provider] = (providerCounts[r.provider] || 0) + 1;
     });
-    const mostSelectedProvider = Object.keys(providerCounts).reduce((a, b) => 
+    const mostSelectedProvider = Object.keys(providerCounts).reduce((a, b) =>
       providerCounts[a] > providerCounts[b] ? a : b, 'gpt');
 
     // Find fastest provider
@@ -352,7 +352,7 @@ class SessionService {
     Object.keys(providerLatencies).forEach(provider => {
       avgProviderLatencies[provider] = providerLatencies[provider].reduce((a, b) => a + b, 0) / providerLatencies[provider].length;
     });
-    const fastestProvider = Object.keys(avgProviderLatencies).reduce((a, b) => 
+    const fastestProvider = Object.keys(avgProviderLatencies).reduce((a, b) =>
       avgProviderLatencies[a] < avgProviderLatencies[b] ? a : b, 'gpt');
 
     // Find most reliable provider
@@ -362,7 +362,7 @@ class SessionService {
       const successful = providerResponses.filter(r => r.status === 'success').length;
       providerSuccessRates[provider] = successful / providerResponses.length;
     });
-    const mostReliableProvider = Object.keys(providerSuccessRates).reduce((a, b) => 
+    const mostReliableProvider = Object.keys(providerSuccessRates).reduce((a, b) =>
       providerSuccessRates[a] > providerSuccessRates[b] ? a : b, 'gpt');
 
     return {
@@ -386,7 +386,7 @@ class SessionService {
   calculateProviderStats(responses) {
     const providers = ['gpt', 'llama', 'mistral', 'gemini', 'copilot', 'deepseek'];
     const providerData = {};
-    
+
     // Initialize provider data
     providers.forEach(provider => {
       providerData[provider] = {
@@ -407,11 +407,11 @@ class SessionService {
     responses.forEach(response => {
       const provider = response.provider;
       if (!providerData[provider]) return;
-      
+
       const data = providerData[provider];
       data.totalResponses++;
       data.responseCount++;
-      
+
       if (response.status === 'success') {
         data.successfulResponses++;
         data.totalLatency += response.metrics?.latencyMs || 0;
@@ -422,7 +422,7 @@ class SessionService {
       } else {
         data.errorResponses++;
       }
-      
+
       data.totalRetries += response.retryCount || 0;
     });
 
@@ -431,7 +431,7 @@ class SessionService {
       const data = providerData[provider];
       const successRate = data.totalResponses > 0 ? data.successfulResponses / data.totalResponses : 0;
       const selectionRate = responses.length > 0 ? data.totalResponses / responses.length : 0;
-      
+
       return {
         provider,
         totalResponses: data.totalResponses,
@@ -454,27 +454,27 @@ class SessionService {
     // Group responses by day for last 7 days
     const now = new Date();
     const trends = [];
-    
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      
+
       const dayResponses = responses.filter(r => {
         const responseDate = new Date(r.createdAt);
         return responseDate.toISOString().split('T')[0] === dateStr;
       });
-      
+
       const successfulResponses = dayResponses.filter(r => r.status === 'success');
-      
+
       const avgLatency = successfulResponses.length > 0
         ? successfulResponses.reduce((sum, r) => sum + (r.metrics?.latencyMs || 0), 0) / successfulResponses.length
         : 0;
-      
+
       const successRate = dayResponses.length > 0
         ? successfulResponses.length / dayResponses.length
         : 0;
-      
+
       trends.push({
         date: date.toLocaleDateString('en-US', { weekday: 'short' }),
         avgLatency: Math.round(avgLatency),
@@ -482,7 +482,7 @@ class SessionService {
         totalResponses: dayResponses.length
       });
     }
-    
+
     return trends;
   }
 }

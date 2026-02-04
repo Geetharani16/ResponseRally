@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { ProviderResponse, ProviderType } from '@/types';
 import { ResponseCard } from './ResponseCard';
+import { SkeletonResponse } from './ui/SkeletonResponse';
 import { ComprehensiveMetricsMatrix } from './ComprehensiveMetricsMatrix';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -89,7 +90,7 @@ export const ResponseGrid: React.FC<ResponseGridProps> = ({
 
   return (
     <div className="relative">
-      
+
       {/* Scroll Buttons */}
       {canScrollLeft && (
         <Button
@@ -130,15 +131,19 @@ export const ResponseGrid: React.FC<ResponseGridProps> = ({
       >
         {sortedResponses.map((response) => (
           <div key={response.id} style={{ scrollSnapAlign: 'start' }}>
-            <ResponseCard
-              response={response}
-              isSelected={response.id === selectedResponseId}
-              isBestCandidate={selectedResponseId === null && response.status === 'success'}
-              onSelectBest={() => onSelectBest(response.id)}
-              onRetry={() => onRetry(response.provider)}
-              isHidden={hiddenProviders.has(response.provider)}
-              onToggleHide={() => toggleHideProvider(response.provider)}
-            />
+            {response.status === 'pending' ? (
+              <SkeletonResponse provider={response.provider} />
+            ) : (
+              <ResponseCard
+                response={response}
+                isSelected={response.id === selectedResponseId}
+                isBestCandidate={selectedResponseId === null && response.status === 'success'}
+                onSelectBest={() => onSelectBest(response.id)}
+                onRetry={() => onRetry(response.provider)}
+                isHidden={hiddenProviders.has(response.provider)}
+                onToggleHide={() => toggleHideProvider(response.provider)}
+              />
+            )}
           </div>
         ))}
       </div>
@@ -155,7 +160,7 @@ export const ResponseGrid: React.FC<ResponseGridProps> = ({
           />
         ))}
       </div>
-      
+
       {/* Comprehensive Metrics Matrix */}
       {responses.length > 0 && (
         <div className="mt-6">

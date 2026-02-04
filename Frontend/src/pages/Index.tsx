@@ -79,9 +79,9 @@ const Index: React.FC = () => {
   if (!isAuthenticated && showAuthModal) {
     return (
       <div className="min-h-screen bg-background">
-        <AuthModal 
-          isOpen={showAuthModal} 
-          onClose={() => {}}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => { }}
           onAuthSuccess={handleAuthSuccess}
         />
       </div>
@@ -91,8 +91,8 @@ const Index: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Auth Modal - can be shown again on logout */}
-      <AuthModal 
-        isOpen={showAuthModal} 
+      <AuthModal
+        isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onAuthSuccess={handleAuthSuccess}
       />
@@ -104,8 +104,8 @@ const Index: React.FC = () => {
           {/* Conversation History */}
           {(hasHistory || session.currentPrompt) && (
             <section className="animate-fade-in">
-              <ConversationHistory 
-                turns={session.conversationHistory} 
+              <ConversationHistory
+                turns={session.conversationHistory}
                 currentPrompt={session.currentPrompt}
                 isProcessing={session.isProcessing}
               />
@@ -113,7 +113,7 @@ const Index: React.FC = () => {
           )}
 
           {/* Response Comparison Grid */}
-          {hasCurrentResponses && (
+          {(hasCurrentResponses || session.isProcessing) && (
             <section className="animate-fade-in">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-foreground">
@@ -125,7 +125,7 @@ const Index: React.FC = () => {
                   </span>
                 )}
               </div>
-              
+
               <ResponseGrid
                 responses={session.currentResponses}
                 selectedResponseId={session.selectedResponseId}
@@ -137,7 +137,7 @@ const Index: React.FC = () => {
               {!session.isProcessing && session.currentResponses.some(r => r.status === 'success') && !session.selectedResponseId && (
                 <div className="mt-4 p-4 glass-card rounded-lg border border-primary/30">
                   <p className="text-sm text-muted-foreground text-center">
-                    <span className="text-primary font-medium">Tip:</span> Select the best response to continue the conversation. 
+                    <span className="text-primary font-medium">Tip:</span> Select the best response to continue the conversation.
                     The selected response will be used as context for your next prompt.
                   </p>
                 </div>
@@ -151,7 +151,25 @@ const Index: React.FC = () => {
             hasCurrentResponses && !session.selectedResponseId ? 'opacity-50 pointer-events-none' : '',
             session.currentPrompt && session.isProcessing ? 'opacity-50 pointer-events-none' : ''
           )}>
-            {(hasHistory || session.currentPrompt) && !hasCurrentResponses && (
+            {session.errorMessage && (
+              <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/50 text-red-500 flex items-center justify-between animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">⚠️</span>
+                  <div>
+                    <p className="font-semibold">Connection Error</p>
+                    <p className="text-sm opacity-90">{session.errorMessage}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => resetSession()}
+                  className="px-3 py-1 text-xs bg-red-500/20 hover:bg-red-500/30 rounded transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {(hasHistory || session.currentPrompt) && !hasCurrentResponses && !session.isProcessing && !session.errorMessage && (
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-foreground">
                   {session.currentPrompt ? 'Processing Prompt' : 'Continue Conversation'}
@@ -163,15 +181,15 @@ const Index: React.FC = () => {
                 </p>
               </div>
             )}
-            
+
             {!hasHistory && !hasCurrentResponses && !session.currentPrompt && (
               <div className="text-center mb-8 animate-fade-in">
                 <h2 className="text-3xl font-bold mb-3">
                   <span className="gradient-text">Compare AI Responses</span>
                 </h2>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Submit a prompt and see how different AI models respond. 
-                  Compare quality, latency, and style across GPT-4, LLaMA, Mistral, 
+                  Submit a prompt and see how different AI models respond.
+                  Compare quality, latency, and style across GPT-4, LLaMA, Mistral,
                   Gemini, Copilot, and DeepSeek.
                 </p>
               </div>

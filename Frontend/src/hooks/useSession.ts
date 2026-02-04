@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { 
-  SessionState, 
-  ProviderResponse, 
-  ConversationTurn, 
+import {
+  SessionState,
+  ProviderResponse,
+  ConversationTurn,
   ProviderType,
-  PROVIDERS 
+  PROVIDERS
 } from '@/types';
 
 
@@ -24,9 +24,11 @@ const createInitialSession = (): SessionState => ({
 const apiService = {
   // Create a new session
   createSession: async (): Promise<SessionState> => {
-    const response = await fetch('http://localhost:5002/api/v1/session', {
+    const userId = localStorage.getItem('userId');
+    const response = await fetch('http://127.0.0.1:5002/api/v1/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }), // Send userId if available
     });
     if (!response.ok) throw new Error('Failed to create session');
     return response.json();
@@ -103,7 +105,7 @@ const wsService = {
     // TODO: Implement WebSocket connection for real-time updates
     // const ws = new WebSocket(`ws://localhost:5002/ws/session/${sessionId}`);
     // ws.onmessage = (event) => onMessage(JSON.parse(event.data));
-    
+
     // For now, we'll use polling as fallback
     const interval = setInterval(async () => {
       try {
@@ -113,7 +115,7 @@ const wsService = {
         console.error('Polling error:', error);
       }
     }, 1000); // Poll every second
-    
+
     return () => clearInterval(interval);
   }
 };
@@ -123,14 +125,14 @@ const initializeSession = async (): Promise<SessionState> => {
   try {
     // Try to create a new session via backend
     const sessionData = await apiService.createSession();
-    
+
     // Store the userId in localStorage if it exists
     if (sessionData.userId) {
       localStorage.setItem('userId', sessionData.userId);
       console.log('Stored userId in localStorage:', sessionData.userId);
       console.log('Session data received:', sessionData);
     }
-    
+
     return sessionData;
   } catch (error) {
     console.error('Backend connection failed, falling back to local session:', error);
@@ -155,7 +157,7 @@ const loadStoredConversation = (storedConversation: any): SessionState => {
 export function useSession() {
   const [session, setSession] = useState<SessionState>(createInitialSession);
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   // Initialize session from backend on mount
   useEffect(() => {
     const initSession = async () => {
@@ -167,7 +169,7 @@ export function useSession() {
         // Keep the initial session if backend fails
       }
     };
-    
+
     initSession();
   }, []);
 
@@ -185,7 +187,7 @@ export function useSession() {
 
     window.addEventListener('rr-load-conversation', handleLoadConversation as EventListener);
     window.addEventListener('rr-new-session', handleNewSession);
-    
+
     return () => {
       window.removeEventListener('rr-load-conversation', handleLoadConversation as EventListener);
       window.removeEventListener('rr-new-session', handleNewSession);
@@ -244,20 +246,36 @@ export function useSession() {
     try {
       // Submit to backend API
       const updatedSession = await apiService.submitPrompt(session.id, prompt, session.enabledProviders, session.conversationHistory);
-      
+
       // Update session with response from backend
       setSession(updatedSession);
     } catch (error) {
       console.error('Error submitting prompt:', error);
-      
-      // Show error message and keep responses empty
+
+      // Show error message but keep responses for retry context if needed
       setSession(prev => ({
         ...prev,
         isProcessing: false,
-        currentResponses: [],
+        errorMessage: error instanceof Error ? error.message : 'An unknown error occurred',
+        currentResponses: [], // Clear responses as they are invalid
       }));
     }
   }, [session.id, session.isProcessing, session.enabledProviders, session.conversationHistory]);
+
+  // Poll for updates when processing
+  useEffect(() => {
+    if (!session.isProcessing) return;
+
+    const stopPolling = wsService.connect(session.id, (payload) => {
+      if (payload.type === 'session_update' && payload.data) {
+        setSession(payload.data);
+      }
+    });
+
+    return () => {
+      stopPolling();
+    };
+  }, [session.id, session.isProcessing]);
 
   /**
    * =====================================================
@@ -275,12 +293,16 @@ export function useSession() {
     try {
       // Update backend
       const updatedSession = await apiService.selectResponse(session.id, responseId);
-      
+
       // Update local state with response from backend
       setSession(updatedSession);
+
+      // Force a refresh to ensure complete consistency with DB
+      const freshSession = await apiService.getSession(session.id);
+      setSession(freshSession);
     } catch (error) {
       console.error('Error selecting response:', error);
-      
+
       // Fallback to local implementation if backend fails
       setSession(prev => {
         const selectedResponse = prev.currentResponses.find(r => r.id === responseId);
@@ -309,12 +331,12 @@ export function useSession() {
     try {
       // Update backend
       const updatedSession = await apiService.toggleProvider(session.id, providerId);
-      
+
       // Update local state with response from backend
       setSession(updatedSession);
     } catch (error) {
       console.error('Error toggling provider:', error);
-      
+
       // Fallback to local implementation if backend fails
       setSession(prev => ({
         ...prev,
@@ -327,16 +349,16 @@ export function useSession() {
 
   const resetSession = useCallback(async () => {
     abortControllerRef.current?.abort();
-    
+
     try {
       // Reset session on backend
       const newSession = await apiService.resetSession(session.id);
-      
+
       // Update local state
       setSession(newSession);
     } catch (error) {
       console.error('Error resetting session:', error);
-      
+
       // Fallback to local implementation if backend fails
       setSession(createInitialSession());
     }
@@ -364,12 +386,12 @@ export function useSession() {
     try {
       // Retry provider on backend
       const updatedSession = await apiService.retryProvider(session.id, providerId);
-      
+
       // Update local state with response from backend
       setSession(updatedSession);
     } catch (error) {
       console.error('Error retrying provider:', error);
-      
+
       // Simply return without fallback response generation
       return;
     }

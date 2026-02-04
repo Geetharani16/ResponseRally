@@ -9,9 +9,9 @@
 
 import { ProviderType, ProviderResponse, ConversationTurn, SessionState, DashboardData } from '@/types';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://localhost:5002/api/v1' 
-  : 'http://localhost:5002/api/v1';
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'http://127.0.0.1:5002/api/v1'
+  : 'http://127.0.0.1:5002/api/v1';
 
 // Helper function for API calls
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -34,36 +34,36 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
  * Session Management
  */
 export async function createSession(): Promise<SessionState> {
-  return apiCall<SessionState>('/sessions', {
+  return apiCall<SessionState>('/session', {
     method: 'POST',
   });
 }
 
 export async function getSession(sessionId: string): Promise<SessionState> {
-  return apiCall<SessionState>(`/sessions/${sessionId}`);
+  return apiCall<SessionState>(`/session/${sessionId}`);
 }
 
 export async function resetSession(sessionId: string): Promise<SessionState> {
-  return apiCall<SessionState>(`/sessions/${sessionId}/reset`, {
+  return apiCall<SessionState>(`/session/${sessionId}/reset`, {
     method: 'POST',
   });
 }
 
 export async function selectResponse(sessionId: string, responseId: string): Promise<SessionState> {
-  return apiCall<SessionState>(`/sessions/${sessionId}/select`, {
+  return apiCall<SessionState>(`/session/${sessionId}/select-response`, {
     method: 'POST',
     body: JSON.stringify({ responseId }),
   });
 }
 
 export async function toggleProvider(sessionId: string, providerId: ProviderType): Promise<SessionState> {
-  return apiCall<SessionState>(`/sessions/${sessionId}/providers/${providerId}/toggle`, {
+  return apiCall<SessionState>(`/session/${sessionId}/toggle-provider`, {
     method: 'POST',
   });
 }
 
 export async function retryProvider(sessionId: string, providerId: ProviderType): Promise<SessionState> {
-  return apiCall<SessionState>(`/sessions/${sessionId}/providers/${providerId}/retry`, {
+  return apiCall<SessionState>(`/session/${sessionId}/retry-provider`, {
     method: 'POST',
   });
 }
@@ -82,7 +82,7 @@ export async function getUserAnalytics(userId: string) {
 }
 
 export async function getUserSessions(userId: string) {
-  return apiCall(`/sessions/user/${userId}`);
+  return apiCall(`/session/user/${userId}`);
 }
 
 // NEW: Get user conversations with all responses
@@ -99,28 +99,28 @@ export async function getSessionResponses(sessionId: string) {
  * User Management
  */
 export async function createUser(userData: { email: string; name: string }) {
-  return apiCall('/users', {
+  return apiCall('/auth/register', {  // Corrected to likely auth route
     method: 'POST',
     body: JSON.stringify(userData),
   });
 }
 
 export async function getUserProfile(userId: string) {
-  return apiCall(`/users/${userId}`);
+  return apiCall(`/auth/user/${userId}`); // Corrected to likely auth route
 }
 
 /**
  * Export & Data Management
  */
 export async function exportSessionData(sessionId: string, format: 'json' | 'csv') {
-  return apiCall(`/sessions/${sessionId}/export`, {
+  return apiCall(`/session/${sessionId}/export`, {
     method: 'POST',
     body: JSON.stringify({ format }),
   });
 }
 
 export async function exportUserData(userId: string, format: 'json' | 'csv') {
-  return apiCall(`/users/${userId}/export`, {
+  return apiCall(`/auth/user/${userId}/export`, {
     method: 'POST',
     body: JSON.stringify({ format }),
   });

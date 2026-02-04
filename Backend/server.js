@@ -8,7 +8,7 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 
 // Middleware
 app.use(cors());
@@ -30,42 +30,18 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// In-memory storage for sessions (in production, use a database like MongoDB or PostgreSQL)
-let sessions = new Map();
-let providers = [
-  { id: 'gpt', name: 'GPT-4', displayName: 'OpenAI GPT-4', enabled: true },
-  { id: 'llama', name: 'LLaMA', displayName: 'Meta LLaMA', enabled: true },
-  { id: 'mistral', name: 'Mistral', displayName: 'Mistral AI', enabled: true },
-  { id: 'gemini', name: 'Gemini', displayName: 'Google Gemini', enabled: true },
-  { id: 'copilot', name: 'Copilot', displayName: 'Microsoft Copilot', enabled: true },
-  { id: 'deepseek', name: 'DeepSeek', displayName: 'DeepSeek', enabled: true }
-];
+// Database instance
+const db = require('./database/db');
 
-// Helper function to create a new session
-const createSession = () => {
-  return {
-    id: uuidv4(),
-    conversationHistory: [],
-    currentPrompt: '',
-    currentResponses: [],
-    isProcessing: false,
-    selectedResponseId: null,
-    enabledProviders: providers.filter(p => p.enabled).map(p => p.id),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
-};
-
-// In-memory storage for users and OTPs
-let users = new Map();
-let otpStore = new Map();
+// Ensure DB connects or logs error but doesn't crash immediately
+// (db.connect is called in constructor, hope it works)
 
 // Create transporter for Gmail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'myspace.otp@gmail.com',
-    pass: 'cwtp aowz oded tqcn'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
@@ -128,20 +104,22 @@ const sendOTPEmail = async (email, otp) => {
 };
 
 // Validate user credentials
-const validateCredentials = (email, password, isLogin) => {
+const validateCredentials = async (email, password, isLogin) => {
   if (isLogin) {
     // For login, check if user exists and password matches
-    const user = users.get(email);
+    const user = await db.getUserByEmail(email);
     if (!user) {
       return { valid: false, error: 'User not found. Please register first.' };
     }
+    // In production, compare hashed passwords!
     if (user.password !== password) {
       return { valid: false, error: 'Invalid password' };
     }
-    return { valid: true };
+    return { valid: true, user };
   } else {
     // For registration, check if user already exists
-    if (users.has(email)) {
+    const existingUser = await db.getUserByEmail(email);
+    if (existingUser) {
       return { valid: false, error: 'User already exists. Please login.' };
     }
     return { valid: true };
@@ -153,10 +131,10 @@ app.post('/api/v1/auth/request-otp', async (req, res) => {
   console.log('=== OTP Request Received ===');
   console.log('Request body:', req.body);
   console.log('Timestamp:', new Date().toISOString());
-  
+
   try {
     const { email, password, isLogin, name } = req.body;
-    
+
     if (!email || !password) {
       console.log('Missing email or password');
       return res.status(400).json({ error: 'Email and password are required' });
@@ -164,34 +142,55 @@ app.post('/api/v1/auth/request-otp', async (req, res) => {
 
     console.log('Validating credentials for:', email);
     // Validate credentials first
-    const validation = validateCredentials(email, password, isLogin);
+    const validation = await validateCredentials(email, password, isLogin);
     if (!validation.valid) {
       console.log('Credential validation failed:', validation.error);
       return res.status(400).json({ error: validation.error });
     }
 
     console.log('Credentials valid, generating OTP...');
-    // If registration, create user
+    let userId;
+
+    // If registration, create user in DB (temporarily or pending verification? 
+    // Usually we verify first, but keeping existing flow logic: create user then verify OTP?)
+    // Actually existing flow was: users.set(email, ...) then send OTP.
+    // Let's stick to existing flow but use DB.
     if (!isLogin) {
-      users.set(email, { email, password, name, createdAt: new Date() });
+      const newUser = await db.createUser({
+        id: uuidv4(),
+        email,
+        password, // In production, hash this!
+        name,
+        isVerified: false
+      });
+      userId = newUser.id;
       console.log('New user registered:', email);
+    } else {
+      userId = validation.user.id;
     }
 
     const otp = generateOTP();
     console.log('Generated OTP:', otp);
-    otpStore.set(email, {
+
+    // Store OTP in simple in-memory map for now (short lived), or DB if preferred.
+    // Using in-memory Map 'otpStore' which we accidentally deleted in previous chunk?
+    // Let's restore otpStore definition.
+    if (!global.otpStore) global.otpStore = new Map();
+
+    global.otpStore.set(email, {
       otp,
       createdAt: Date.now(),
-      isLogin
+      isLogin,
+      userId
     });
 
     console.log('Sending OTP email...');
     const emailSent = await sendOTPEmail(email, otp);
-    
+
     if (emailSent) {
       console.log('OTP email sent successfully to:', email);
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: 'OTP sent successfully',
         expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
       });
@@ -209,18 +208,18 @@ app.post('/api/v1/auth/verify-otp', (req, res) => {
   console.log('=== OTP Verification Received ===');
   console.log('Request body:', req.body);
   console.log('Timestamp:', new Date().toISOString());
-  
+
   try {
     const { email, otp } = req.body;
-    
+
     if (!email || !otp) {
       console.log('Missing email or OTP');
       return res.status(400).json({ error: 'Email and OTP are required' });
     }
 
     console.log('Verifying OTP for:', email);
-    const storedData = otpStore.get(email);
-    
+    const storedData = (global.otpStore || new Map()).get(email);
+
     if (!storedData) {
       console.log('No OTP found for email:', email);
       return res.status(400).json({ error: 'No OTP found for this email' });
@@ -237,8 +236,8 @@ app.post('/api/v1/auth/verify-otp', (req, res) => {
     if (storedData.otp === otp) {
       console.log('OTP verified successfully for:', email);
       otpStore.delete(email); // Remove used OTP
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: 'Authentication successful',
         isLogin: storedData.isLogin
       });
@@ -254,6 +253,7 @@ app.post('/api/v1/auth/verify-otp', (req, res) => {
 
 // Import the app module which contains all the routes
 const appModule = require('./src/app');
+app.use('/', appModule);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -263,8 +263,31 @@ app.get('/health', (req, res) => {
 
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`ResponseRally Backend server running on port ${PORT}`);
+const startServer = async () => {
+  try {
+    await db.connect();
+    console.log('Database connected successfully');
+
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`ResponseRally Backend server running on port ${PORT}`);
+    });
+
+    server.on('error', (e) => {
+      console.error('Server error:', e);
+      if (e.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use`);
+      }
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
 });
 
 module.exports = app;

@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const analyticsController = require('../controllers/analyticsController');
 
-// Placeholder route for analytics
-router.get('/', (req, res) => {
-  res.json({ message: 'Analytics endpoint' });
-});
+// Dashboard data endpoint
+router.get('/dashboard/:userId', analyticsController.getDashboardData);
+
+// User analytics endpoint
+router.get('/user/:userId', analyticsController.getUserAnalytics);
 
 module.exports = router;

@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell
 } from 'recharts';
-import { 
-  TrendingUp, 
-  Clock, 
+import {
+  TrendingUp,
+  Clock,
   Hash,
   CheckCircle,
   AlertCircle,
@@ -32,10 +32,10 @@ import { ProviderBadge } from '@/components/ProviderBadge';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { getDashboardData } from '@/lib/api';
-import { 
-  DashboardData, 
-  ProviderStats, 
-  OverallStats, 
+import {
+  DashboardData,
+  ProviderStats,
+  OverallStats,
   ConversationTurn,
   PROVIDERS
 } from '@/types';
@@ -44,16 +44,18 @@ import {
 const fetchDashboardData = async (userId: string): Promise<DashboardData> => {
   try {
     console.log('Dashboard: Fetching data for userId:', userId);
+    // In production, the backend should derive userId from the auth token/session
+    // For now, we pass it explicitly but ideally we should use an auth context
     const data = await getDashboardData(userId);
-    
+
     // Validate and sanitize the received data
     const validatedData = validateDashboardData(data);
     console.log('Dashboard: Data fetched and validated successfully:', validatedData);
-    
+
     return validatedData;
   } catch (error) {
     console.error('Dashboard: Error fetching dashboard data:', error);
-    
+
     // Return comprehensive error data structure
     return {
       overallStats: {
@@ -85,7 +87,7 @@ const validateDashboardData = (data: any): DashboardData => {
   if (!data) {
     throw new Error('No data received from API');
   }
-  
+
   // Validate overallStats
   const overallStats = {
     totalConversations: Math.max(0, data.overallStats?.totalConversations || 0),
@@ -103,41 +105,41 @@ const validateDashboardData = (data: any): DashboardData => {
     avgTokensPerSecond: Math.max(0, data.overallStats?.avgTokensPerSecond || 0),
     totalRetries: Math.max(0, data.overallStats?.totalRetries || 0)
   };
-  
+
   // Validate providerStats
-  const providerStats = Array.isArray(data.providerStats) 
+  const providerStats = Array.isArray(data.providerStats)
     ? data.providerStats.map((stat: any) => ({
-        provider: stat.provider || 'gpt',
-        totalResponses: Math.max(0, stat.totalResponses || 0),
-        successfulResponses: Math.max(0, stat.successfulResponses || 0),
-        errorResponses: Math.max(0, stat.errorResponses || 0),
-        avgLatency: Math.max(0, stat.avgLatency || 0),
-        avgTokens: Math.max(0, stat.avgTokens || 0),
-        avgResponseLength: Math.max(0, stat.avgResponseLength || 0),
-        totalTokens: Math.max(0, stat.totalTokens || 0),
-        selectionRate: Math.max(0, Math.min(1, stat.selectionRate || 0)),
-        successRate: Math.max(0, Math.min(1, stat.successRate || 0)),
-        avgFirstTokenLatency: Math.max(0, stat.avgFirstTokenLatency || 0),
-        avgTokensPerSecond: Math.max(0, stat.avgTokensPerSecond || 0),
-        totalRetries: Math.max(0, stat.totalRetries || 0)
-      }))
+      provider: stat.provider || 'gpt',
+      totalResponses: Math.max(0, stat.totalResponses || 0),
+      successfulResponses: Math.max(0, stat.successfulResponses || 0),
+      errorResponses: Math.max(0, stat.errorResponses || 0),
+      avgLatency: Math.max(0, stat.avgLatency || 0),
+      avgTokens: Math.max(0, stat.avgTokens || 0),
+      avgResponseLength: Math.max(0, stat.avgResponseLength || 0),
+      totalTokens: Math.max(0, stat.totalTokens || 0),
+      selectionRate: Math.max(0, Math.min(1, stat.selectionRate || 0)),
+      successRate: Math.max(0, Math.min(1, stat.successRate || 0)),
+      avgFirstTokenLatency: Math.max(0, stat.avgFirstTokenLatency || 0),
+      avgTokensPerSecond: Math.max(0, stat.avgTokensPerSecond || 0),
+      totalRetries: Math.max(0, stat.totalRetries || 0)
+    }))
     : [];
-  
+
   // Validate performanceTrends
   const performanceTrends = Array.isArray(data.performanceTrends)
     ? data.performanceTrends.map((trend: any) => ({
-        date: trend.date || 'Unknown',
-        avgLatency: Math.max(0, trend.avgLatency || 0),
-        successRate: Math.max(0, Math.min(1, trend.successRate || 0)),
-        totalResponses: Math.max(0, trend.totalResponses || 0)
-      }))
+      date: trend.date || 'Unknown',
+      avgLatency: Math.max(0, trend.avgLatency || 0),
+      successRate: Math.max(0, Math.min(1, trend.successRate || 0)),
+      totalResponses: Math.max(0, trend.totalResponses || 0)
+    }))
     : [];
-  
+
   // Validate recentConversations
   const recentConversations = Array.isArray(data.recentConversations)
     ? data.recentConversations.slice(0, 10) // Limit to 10 most recent
     : [];
-  
+
   return {
     overallStats,
     providerStats,
@@ -154,25 +156,25 @@ const Dashboard: React.FC = () => {
   const [email, setEmail] = useState('');
   const [joinDate, setJoinDate] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
+
   // Refresh dashboard data
   const refreshData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Use authenticated user's email as userId for analytics, fallback to session userId
       const userEmail = localStorage.getItem('userEmail');
       const sessionUserId = localStorage.getItem('userId') || 'default-user';
       const userId = userEmail || sessionUserId;
-      
+
       console.log('Dashboard: Refreshing data for userId:', userId);
       console.log('  - User Email:', userEmail);
       console.log('  - Session User ID:', sessionUserId);
-      
+
       const data = await fetchDashboardData(userId);
       console.log('Dashboard: Refreshed data:', data);
-      
+
       if (data && data.overallStats) {
         setDashboardData(data);
       } else {
@@ -185,12 +187,12 @@ const Dashboard: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Load profile data from localStorage
   useEffect(() => {
     const storedUsername = localStorage.getItem('username') || 'User';
     const storedEmail = localStorage.getItem('userEmail') || 'user@example.com';
-    
+
     // Handle join date properly - preserve existing dates or use current date for new users
     let storedJoinDate = localStorage.getItem('userJoinDate');
     if (!storedJoinDate) {
@@ -199,7 +201,7 @@ const Dashboard: React.FC = () => {
       storedJoinDate = new Date().toISOString();
       localStorage.setItem('userJoinDate', storedJoinDate);
     }
-    
+
     setUsername(storedUsername);
     setEmail(storedEmail);
     setJoinDate(new Date(storedJoinDate).toLocaleDateString());
@@ -214,12 +216,12 @@ const Dashboard: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Use authenticated user's email as userId for analytics, fallback to session userId
         const userEmail = localStorage.getItem('userEmail');
         const sessionUserId = localStorage.getItem('userId') || 'default-user';
         const userId = userEmail || sessionUserId;
-              
+
         console.log('Dashboard: User identification debug:');
         console.log('  - User Email (for analytics):', userEmail);
         console.log('  - Session User ID:', sessionUserId);
@@ -230,15 +232,15 @@ const Dashboard: React.FC = () => {
           username: localStorage.getItem('username'),
           isAuthenticated: localStorage.getItem('isAuthenticated')
         });
-        
+
         const data = await fetchDashboardData(userId);
         console.log('Dashboard: Received data:', data);
-        
+
         // Additional validation after fetch
         if (!data || !data.overallStats) {
           throw new Error('Invalid data structure received');
         }
-        
+
         setDashboardData(data);
       } catch (err) {
         console.error('Dashboard: Error loading data:', err);
@@ -269,7 +271,7 @@ const Dashboard: React.FC = () => {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
   }, []);
 
@@ -352,7 +354,7 @@ const Dashboard: React.FC = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={refreshData}
@@ -377,7 +379,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </header>
-      
+
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Profile Content Header */}
         <div className="mb-8">
@@ -459,16 +461,16 @@ const Dashboard: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={providerStats}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="provider" 
-                    stroke="hsl(var(--muted-foreground))" 
+                  <XAxis
+                    dataKey="provider"
+                    stroke="hsl(var(--muted-foreground))"
                     fontSize={12}
                   />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))" 
+                  <YAxis
+                    stroke="hsl(var(--muted-foreground))"
                     fontSize={12}
                   />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
                       borderColor: 'hsl(var(--border))',
@@ -502,7 +504,7 @@ const Dashboard: React.FC = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ provider, selectionRate }) => 
+                    label={({ provider, selectionRate }) =>
                       `${provider.toUpperCase()}: ${(selectionRate * 100).toFixed(1)}%`
                     }
                     outerRadius={80}
@@ -514,7 +516,7 @@ const Dashboard: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: any, name: string) => [`${(value * 100).toFixed(1)}%`, 'Selection Rate']}
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
@@ -550,8 +552,8 @@ const Dashboard: React.FC = () => {
               </thead>
               <tbody>
                 {providerStats.map((stats, index) => (
-                  <tr 
-                    key={stats.provider} 
+                  <tr
+                    key={stats.provider}
                     className="border-b border-border/20 last:border-b-0 hover:bg-muted/10 transition-colors"
                   >
                     <td className="p-3">
@@ -563,8 +565,8 @@ const Dashboard: React.FC = () => {
                     <td className="p-3">
                       <div className="flex items-center">
                         <div className="w-16 bg-muted rounded-full h-2 mr-2">
-                          <div 
-                            className="bg-green-500 h-2 rounded-full" 
+                          <div
+                            className="bg-green-500 h-2 rounded-full"
                             style={{ width: `${stats.successRate * 100}%` }}
                           ></div>
                         </div>
@@ -595,23 +597,23 @@ const Dashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={performanceTrends}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="hsl(var(--muted-foreground))" 
+                <XAxis
+                  dataKey="date"
+                  stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <YAxis 
-                  yAxisId="left" 
-                  stroke="hsl(var(--muted-foreground))" 
+                <YAxis
+                  yAxisId="left"
+                  stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <YAxis 
-                  yAxisId="right" 
-                  orientation="right" 
-                  stroke="hsl(var(--muted-foreground))" 
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                 />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--background))',
                     borderColor: 'hsl(var(--border))',
@@ -624,17 +626,17 @@ const Dashboard: React.FC = () => {
                   }}
                 />
                 <Legend />
-                <Bar 
-                  yAxisId="left" 
-                  dataKey="avgLatency" 
-                  name="Avg Latency (ms)" 
-                  fill="#3b82f6" 
+                <Bar
+                  yAxisId="left"
+                  dataKey="avgLatency"
+                  name="Avg Latency (ms)"
+                  fill="#3b82f6"
                 />
-                <Bar 
-                  yAxisId="right" 
-                  dataKey="successRate" 
-                  name="Success Rate" 
-                  fill="#10b981" 
+                <Bar
+                  yAxisId="right"
+                  dataKey="successRate"
+                  name="Success Rate"
+                  fill="#10b981"
                 />
               </BarChart>
             </ResponsiveContainer>

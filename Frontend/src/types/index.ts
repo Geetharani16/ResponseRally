@@ -49,6 +49,7 @@ export interface SessionState {
   isProcessing: boolean;
   selectedResponseId: string | null;
   enabledProviders: ProviderType[];
+  errorMessage?: string | null;
 }
 
 // Provider configuration

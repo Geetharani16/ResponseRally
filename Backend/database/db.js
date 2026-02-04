@@ -17,8 +17,8 @@ class Database {
     this.conversations = null;
     this.responses = null;
     this.users = null;
-    
-    this.connect();
+
+    // this.connect(); // Removed to prevent unhandled promise rejection
   }
 
   async connect() {
@@ -26,13 +26,13 @@ class Database {
       this.client = new MongoClient(MONGODB_URI);
       await this.client.connect();
       this.db = this.client.db(DB_NAME);
-      
+
       // Initialize collections
       this.sessions = this.db.collection('sessions');
       this.conversations = this.db.collection('conversations');
       this.responses = this.db.collection('responses');
       this.users = this.db.collection('users');
-      
+
       console.log('Connected to MongoDB database');
     } catch (error) {
       console.error('Database connection error:', error);
@@ -68,11 +68,11 @@ class Database {
     try {
       const result = await this.sessions.findOneAndUpdate(
         { id: sessionId },
-        { 
-          $set: { 
-            ...updateData, 
-            updatedAt: new Date() 
-          } 
+        {
+          $set: {
+            ...updateData,
+            updatedAt: new Date()
+          }
         },
         { returnDocument: 'after' }
       );
@@ -130,11 +130,11 @@ class Database {
     try {
       const result = await this.users.findOneAndUpdate(
         { id: userId },
-        { 
-          $set: { 
-            ...updateData, 
-            updatedAt: new Date() 
-          } 
+        {
+          $set: {
+            ...updateData,
+            updatedAt: new Date()
+          }
         },
         { returnDocument: 'after' }
       );
@@ -154,7 +154,7 @@ class Database {
         isBest: responseData.isBest === true, // Ensure boolean value
         createdAt: new Date()
       };
-      
+
       const result = await this.responses.insertOne(responseToInsert);
       return { ...responseToInsert, _id: result.insertedId };
     } catch (error) {
@@ -290,5 +290,5 @@ class Database {
   }
 }
 
-// Export database class - will be instantiated in app
-module.exports = Database;
+const db = new Database();
+module.exports = db;

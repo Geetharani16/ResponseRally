@@ -4,17 +4,17 @@ const { v4: uuidv4 } = require('uuid');
 exports.createSession = async (req, res, next) => {
   try {
     console.log(`\n>>> Creating new session at ${new Date().toISOString()} <<<`);
-    
-    // Generate a unique user ID for this session
-    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    console.log(`>>> Generated User ID: ${userId}`);
-    
+
+    // Use userId from request if available (authenticated user), otherwise generate temporary one
+    const userId = req.body.userId || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`>>> Using User ID: ${userId}`);
+
     const session = await sessionService.createSession(userId);
     console.log(`>>> New session created successfully with ID: ${session.id}`);
     console.log(`>>> Session userId field: ${session.userId}`);
     console.log(`>>> Enabled providers: ${session.enabledProviders.join(', ')}`);
     console.log(`>>> Session created at: ${session.createdAt}\n`);
-    
+
     // Return session with userId so frontend can store it
     res.status(201).json({
       ...session,
@@ -32,12 +32,12 @@ exports.getSession = async (req, res, next) => {
     const { sessionId } = req.params;
     console.log(`\n>>> Retrieving session: ${sessionId} at ${new Date().toISOString()} <<<`);
     const session = await sessionService.getSession(sessionId);
-    
+
     if (!session) {
       console.log(`>>> Session not found: ${sessionId}`);
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     console.log(`>>> Session retrieved successfully: ${sessionId}`);
     console.log(`>>> Active providers: ${session.enabledProviders.join(', ')}`);
     console.log(`>>> Last updated: ${session.updatedAt}\n`);
@@ -53,12 +53,12 @@ exports.resetSession = async (req, res, next) => {
     const { sessionId } = req.params;
     console.log(`\n>>> Resetting session: ${sessionId} at ${new Date().toISOString()} <<<`);
     const session = await sessionService.resetSession(sessionId);
-    
+
     if (!session) {
       console.log(`>>> Cannot reset - Session not found: ${sessionId}`);
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     console.log(`>>> Session reset successfully: ${sessionId}`);
     console.log(`>>> Conversation history cleared`);
     console.log(`>>> Current prompt cleared`);
@@ -74,20 +74,20 @@ exports.selectResponse = async (req, res, next) => {
   try {
     const { sessionId } = req.params;
     const { responseId } = req.body;
-    
+
     if (!responseId) {
       return res.status(400).json({ error: 'responseId is required' });
     }
-    
+
     console.log(`\n>>> Selecting best response for session: ${sessionId} at ${new Date().toISOString()} <<<`);
     console.log(`>>> Response ID selected: ${responseId}`);
     const session = await sessionService.selectResponse(sessionId, responseId);
-    
+
     if (!session) {
       console.log(`>>> Cannot select response - Session not found: ${sessionId}`);
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     console.log(`>>> Response selected successfully in session: ${sessionId}`);
     console.log(`>>> Selected response ID: ${responseId}`);
     console.log(`>>> Added to conversation history\n`);
@@ -102,19 +102,19 @@ exports.toggleProvider = async (req, res, next) => {
   try {
     const { sessionId } = req.params;
     const { providerId } = req.body;
-    
+
     if (!providerId) {
       return res.status(400).json({ error: 'providerId is required' });
     }
-    
+
     console.log(`\n>>> Toggling provider: ${providerId} for session: ${sessionId} at ${new Date().toISOString()} <<<`);
     const session = await sessionService.toggleProvider(sessionId, providerId);
-    
+
     if (!session) {
       console.log(`>>> Cannot toggle provider - Session not found: ${sessionId}`);
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     const isEnabled = session.enabledProviders.includes(providerId);
     console.log(`>>> Provider ${providerId} ${isEnabled ? 'enabled' : 'disabled'} in session: ${sessionId}`);
     console.log(`>>> Updated active providers: ${session.enabledProviders.join(', ')}\n`);
@@ -129,19 +129,19 @@ exports.retryProvider = async (req, res, next) => {
   try {
     const { sessionId } = req.params;
     const { providerId } = req.body;
-    
+
     if (!providerId) {
       return res.status(400).json({ error: 'providerId is required' });
     }
-    
+
     console.log(`\n>>> Retrying provider: ${providerId} for session: ${sessionId} at ${new Date().toISOString()} <<<`);
     const session = await sessionService.retryProvider(sessionId, providerId);
-    
+
     if (!session) {
       console.log(`>>> Cannot retry provider - Session not found: ${sessionId}`);
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     const response = session.currentResponses.find(r => r.provider === providerId);
     const retryCount = response ? response.retryCount : 0;
     console.log(`>>> Provider ${providerId} retry initiated in session: ${sessionId}`);
