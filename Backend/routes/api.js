@@ -11,7 +11,8 @@ const analyticsRoutes = require('./analyticsRoutes');
 // Mount routes at appropriate paths
 router.use('/session', sessionRoutes);
 router.use('/prompt', promptRoutes);
-router.use('/session', responseRoutes); // Mount response routes under session since they use :sessionId in their paths
+router.use('/responses', responseRoutes); // Mount response routes under responses for dedicated endpoints
+router.use('/session', responseRoutes); // Keep for backward compatibility
 router.use('/analytics', analyticsRoutes);
 
 

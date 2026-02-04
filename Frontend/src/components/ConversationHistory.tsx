@@ -2,16 +2,18 @@ import React from 'react';
 import { ConversationTurn } from '@/types';
 import { ProviderBadge } from './ProviderBadge';
 import { cn } from '@/lib/utils';
-import { User, Star } from 'lucide-react';
+import { User, Star, Copy } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 interface ConversationHistoryProps {
   turns: ConversationTurn[];
+  currentPrompt?: string;
+  isProcessing?: boolean;
 }
 
-export const ConversationHistory: React.FC<ConversationHistoryProps> = ({ turns }) => {
-  if (turns.length === 0) return null;
+export const ConversationHistory: React.FC<ConversationHistoryProps> = ({ turns, currentPrompt, isProcessing }) => {
+  if (turns.length === 0 && !currentPrompt) return null;
 
   return (
     <div className="space-y-4">
@@ -23,6 +25,27 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({ turns 
       </h3>
       
       <div className="max-h-[50vh] overflow-y-auto pr-2 -mr-2 space-y-3">
+        {/* Render current prompt if it exists */}
+        {currentPrompt && (
+          <div className="space-y-2 animate-fade-in">
+            {/* Current User Prompt */}
+            <div className="flex gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <User className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex-1 glass-card rounded-lg p-3">
+                <p className="text-sm text-foreground/90">{currentPrompt}</p>
+                {isProcessing && (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                    <span>Generating responses...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        
         {turns.map((turn) => (
           <div key={turn.id} className="space-y-2 animate-fade-in">
             {/* User Prompt */}
@@ -61,17 +84,33 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({ turns 
                             typeof child === 'string' && child.includes('\n')
                           );
                           
-                          return isMultiline ? (
-                            <pre className="whitespace-pre-wrap font-mono text-xs p-3 rounded-md bg-muted/50 overflow-x-auto">
+                          if (isMultiline) {
+                            return (
+                              <div className="relative group">
+                                <button
+                                  onClick={() => {
+                                    const codeContent = React.Children.toArray(children).join('');
+                                    navigator.clipboard.writeText(codeContent);
+                                  }}
+                                  className="absolute top-2 right-2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-secondary/80 hover:bg-secondary rounded-md"
+                                  title="Copy code"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </button>
+                                <pre className="whitespace-pre-wrap font-mono text-xs p-3 rounded-md bg-muted/50 overflow-x-auto relative">
+                                  <code {...props} className={className}>
+                                    {children}
+                                  </code>
+                                </pre>
+                              </div>
+                            );
+                          } else {
+                            return (
                               <code {...props} className={className}>
                                 {children}
                               </code>
-                            </pre>
-                          ) : (
-                            <code {...props} className={className}>
-                              {children}
-                            </code>
-                          );
+                            );
+                          }
                         },
                         pre: ({ node, children, ...props }: any) => (
                           <pre className="whitespace-pre-wrap font-mono text-xs p-3 rounded-md bg-muted/50 overflow-x-auto" {...props}>

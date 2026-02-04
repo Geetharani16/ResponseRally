@@ -109,4 +109,45 @@ router.post('/:sessionId/retry-provider', async (req, res) => {
   }
 });
 
+// NEW: Get all responses for a session (including best response tags)
+router.get('/:sessionId/responses', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    // Get all responses for the session
+    const responses = await sessionService.getSessionResponses(sessionId);
+    
+    res.json({
+      sessionId,
+      responses,
+      totalResponses: responses.length,
+      bestResponses: responses.filter(r => r.isBest).length
+    });
+  } catch (error) {
+    console.error('Error fetching session responses:', error);
+    res.status(500).json({ error: 'Failed to fetch session responses' });
+  }
+});
+
+// NEW: Get all responses for a specific conversation
+router.get('/:sessionId/conversation/:conversationId/responses', async (req, res) => {
+  try {
+    const { sessionId, conversationId } = req.params;
+    
+    // Get all responses for the conversation
+    const responses = await sessionService.getConversationResponses(conversationId);
+    
+    res.json({
+      sessionId,
+      conversationId,
+      responses,
+      totalResponses: responses.length,
+      bestResponses: responses.filter(r => r.isBest).length
+    });
+  } catch (error) {
+    console.error('Error fetching conversation responses:', error);
+    res.status(500).json({ error: 'Failed to fetch conversation responses' });
+  }
+});
+
 module.exports = router;

@@ -161,8 +161,14 @@ const Dashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      const userId = localStorage.getItem('userId') || 'default-user';
+      // Use authenticated user's email as userId for analytics, fallback to session userId
+      const userEmail = localStorage.getItem('userEmail');
+      const sessionUserId = localStorage.getItem('userId') || 'default-user';
+      const userId = userEmail || sessionUserId;
+      
       console.log('Dashboard: Refreshing data for userId:', userId);
+      console.log('  - User Email:', userEmail);
+      console.log('  - Session User ID:', sessionUserId);
       
       const data = await fetchDashboardData(userId);
       console.log('Dashboard: Refreshed data:', data);
@@ -184,7 +190,15 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const storedUsername = localStorage.getItem('username') || 'User';
     const storedEmail = localStorage.getItem('userEmail') || 'user@example.com';
-    const storedJoinDate = localStorage.getItem('userJoinDate') || new Date().toISOString();
+    
+    // Handle join date properly - preserve existing dates or use current date for new users
+    let storedJoinDate = localStorage.getItem('userJoinDate');
+    if (!storedJoinDate) {
+      // For users who logged in before this feature was added, set current date
+      // but this preserves the spirit of "member since" for new users
+      storedJoinDate = new Date().toISOString();
+      localStorage.setItem('userJoinDate', storedJoinDate);
+    }
     
     setUsername(storedUsername);
     setEmail(storedEmail);
@@ -201,8 +215,21 @@ const Dashboard: React.FC = () => {
         setIsLoading(true);
         setError(null);
         
-        const userId = localStorage.getItem('userId') || 'default-user';
-        console.log('Dashboard: Using userId from localStorage:', userId);
+        // Use authenticated user's email as userId for analytics, fallback to session userId
+        const userEmail = localStorage.getItem('userEmail');
+        const sessionUserId = localStorage.getItem('userId') || 'default-user';
+        const userId = userEmail || sessionUserId;
+              
+        console.log('Dashboard: User identification debug:');
+        console.log('  - User Email (for analytics):', userEmail);
+        console.log('  - Session User ID:', sessionUserId);
+        console.log('  - Final User ID being used:', userId);
+        console.log('  - Available localStorage items:', {
+          userId: localStorage.getItem('userId'),
+          userEmail: localStorage.getItem('userEmail'),
+          username: localStorage.getItem('username'),
+          isAuthenticated: localStorage.getItem('isAuthenticated')
+        });
         
         const data = await fetchDashboardData(userId);
         console.log('Dashboard: Received data:', data);

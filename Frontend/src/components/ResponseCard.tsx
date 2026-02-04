@@ -4,7 +4,7 @@ import { ProviderBadge } from './ProviderBadge';
 import { StatusIndicator } from './StatusIndicator';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Star, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Star, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -30,9 +30,20 @@ export const ResponseCard: React.FC<ResponseCardProps> = ({
   onToggleHide,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   const canSelectBest = response.status === 'success' && !isSelected;
   const canRetry = response.status === 'error' || response.status === 'rate-limited' || response.status === 'timeout';
+  
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(response.response);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
 
   if (isHidden) {
     return (
@@ -75,6 +86,17 @@ export const ResponseCard: React.FC<ResponseCardProps> = ({
           <StatusIndicator status={response.status} size="sm" />
         </div>
         <div className="flex items-center gap-2">
+          {response.status === 'success' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopy}
+              className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
+              title="Copy response"
+            >
+              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+            </Button>
+          )}
           {onToggleHide && (
             <Button
               variant="ghost"
@@ -133,17 +155,35 @@ export const ResponseCard: React.FC<ResponseCardProps> = ({
                       typeof child === 'string' && child.includes('\n')
                     );
                     
-                    return isMultiline ? (
-                      <pre className="whitespace-pre-wrap font-mono text-xs p-3 rounded-md bg-muted/50 overflow-x-auto">
+                    if (isMultiline) {
+                      return (
+                        <div className="relative group">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const codeContent = React.Children.toArray(children).join('');
+                              navigator.clipboard.writeText(codeContent);
+                            }}
+                            className="absolute top-2 right-2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-secondary/80 hover:bg-secondary"
+                            title="Copy code"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                          <pre className="whitespace-pre-wrap font-mono text-xs p-3 rounded-md bg-muted/50 overflow-x-auto relative">
+                            <code {...props} className={className}>
+                              {children}
+                            </code>
+                          </pre>
+                        </div>
+                      );
+                    } else {
+                      return (
                         <code {...props} className={className}>
                           {children}
                         </code>
-                      </pre>
-                    ) : (
-                      <code {...props} className={className}>
-                        {children}
-                      </code>
-                    );
+                      );
+                    }
                   },
                   pre: ({ node, children, ...props }: any) => (
                     <pre className="whitespace-pre-wrap font-mono text-xs p-3 rounded-md bg-muted/50 overflow-x-auto" {...props}>
@@ -164,23 +204,13 @@ export const ResponseCard: React.FC<ResponseCardProps> = ({
               >
                 {response.response}
               </ReactMarkdown>
-              {response.isStreaming && <span className="typing-cursor" />}
+
             </div>
           </div>
         )}
       </div>
 
-      {/* Progress Bar for Streaming */}
-      {response.isStreaming && (
-        <div className="px-4 pb-2">
-          <div className="h-1 bg-muted rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
-              style={{ width: `${response.streamingProgress}%` }}
-            />
-          </div>
-        </div>
-      )}
+
 
       {/* Action Button - Positioned in bottom right corner */}
       {!isSelected && canSelectBest && (

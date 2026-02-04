@@ -2,7 +2,7 @@
 
 export type ProviderType = 'gpt' | 'llama' | 'mistral' | 'gemini' | 'copilot' | 'deepseek';
 
-export type RequestStatus = 'idle' | 'pending' | 'streaming' | 'success' | 'error' | 'timeout' | 'rate-limited';
+export type RequestStatus = 'idle' | 'pending' | 'success' | 'error' | 'timeout' | 'rate-limited';
 
 export interface ProviderConfig {
   id: ProviderType;
@@ -29,9 +29,7 @@ export interface ProviderResponse {
   metrics: ResponseMetrics;
   retryCount: number;
   errorMessage: string | null;
-  streamingProgress: number; // 0-100
   timestamp: number;
-  isStreaming: boolean;
 }
 
 export interface ConversationTurn {

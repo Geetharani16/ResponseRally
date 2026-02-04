@@ -148,11 +148,15 @@ class Database {
   // Response operations
   async createResponse(responseData) {
     try {
-      const result = await this.responses.insertOne({
+      // Ensure isBest field is properly set (defaults to false if not provided)
+      const responseToInsert = {
         ...responseData,
+        isBest: responseData.isBest === true, // Ensure boolean value
         createdAt: new Date()
-      });
-      return { ...responseData, _id: result.insertedId };
+      };
+      
+      const result = await this.responses.insertOne(responseToInsert);
+      return { ...responseToInsert, _id: result.insertedId };
     } catch (error) {
       console.error('Error creating response:', error);
       throw error;
@@ -249,7 +253,8 @@ class Database {
             totalSessions: { $sum: 1 },
             totalConversations: { $sum: { $size: '$conversations' } },
             totalResponses: { $sum: { $size: '$responses' } },
-            avgResponseTime: { $avg: '$responses.latency' },
+            totalBestResponses: { $sum: { $size: { $filter: { input: '$responses', cond: { $eq: ['$$this.isBest', true] } } } } },
+            avgResponseTime: { $avg: { $avg: '$responses.metrics.latencyMs' } },
             providerStats: {
               $push: {
                 provider: '$responses.provider',

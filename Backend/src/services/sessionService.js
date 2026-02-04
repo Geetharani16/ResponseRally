@@ -79,6 +79,16 @@ class SessionService {
     // Save conversation to database
     await this.db.createConversation(conversationTurn);
     
+    // Save all responses individually to the responses collection with best response tagged
+    for (const resp of session.currentResponses) {
+      await this.db.createResponse({
+        ...resp,
+        conversationId: conversationTurn.id,
+        isBest: resp.id === responseId, // Mark as best if it matches the selected response
+        createdAt: new Date()
+      });
+    }
+    
     // Update session
     const updatedSession = {
       conversationHistory: [...session.conversationHistory, conversationTurn],
@@ -90,6 +100,49 @@ class SessionService {
     };
     
     return await this.db.updateSession(sessionId, updatedSession);
+  }
+  
+  // Method to get all responses for a conversation with best response tagging
+  async getConversationResponses(conversationId) {
+    try {
+      return await this.db.responses.find({ conversationId }).toArray();
+    } catch (error) {
+      console.error('Error getting conversation responses:', error);
+      throw error;
+    }
+  }
+  
+  // Method to get all responses for a session
+  async getSessionResponses(sessionId) {
+    try {
+      // First get all conversations for the session
+      const conversations = await this.db.conversations.find({ sessionId }).toArray();
+      
+      // Get conversation IDs
+      const conversationIds = conversations.map(conv => conv.id);
+      
+      // Get all responses for those conversations
+      if (conversationIds.length === 0) {
+        return [];
+      }
+      
+      return await this.db.responses.find({ 
+        conversationId: { $in: conversationIds } 
+      }).toArray();
+    } catch (error) {
+      console.error('Error getting session responses:', error);
+      throw error;
+    }
+  }
+  
+  // Method to get conversations by session (needed for analytics)
+  async getConversationsBySession(sessionId) {
+    try {
+      return await this.db.conversations.find({ sessionId }).toArray();
+    } catch (error) {
+      console.error('Error getting conversations by session:', error);
+      throw error;
+    }
   }
 
   async toggleProvider(sessionId, providerId) {
@@ -165,6 +218,8 @@ class SessionService {
   async getDashboardData(userId) {
     try {
       console.log(`SessionService: Starting dashboard data generation for user: ${userId}`);
+      console.log(`SessionService: UserId type: ${typeof userId}`);
+      console.log(`SessionService: UserId value: "${userId}"`);
       
       // Validate userId
       if (!userId || typeof userId !== 'string') {

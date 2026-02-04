@@ -7,7 +7,7 @@ const rateLimit = require('express-rate-limit');
 
 const sessionRoutes = require('./routes/sessionRoutes');
 const promptRoutes = require('./routes/promptRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
+const analyticsRoutes = require('../routes/analyticsRoutes');
 
 const healthRoutes = require('./routes/healthRoutes');
 const errorHandler = require('./middleware/errorHandler');

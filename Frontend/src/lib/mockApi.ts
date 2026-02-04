@@ -17,6 +17,17 @@
 
 import { ProviderType, ProviderResponse, ConversationTurn } from '@/types';
 
+// Helper function to generate unique IDs
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 15);
+}
+
+// Helper function to generate mock response text
+function generateMockResponseText(provider: ProviderType, prompt: string, context: ConversationTurn[]): string {
+  const responses = MOCK_RESPONSES[provider];
+  return responses[Math.floor(Math.random() * responses.length)];
+}
+
 const MOCK_RESPONSES: Record<ProviderType, string[]> = {
   gpt: [
     "I'd be happy to help you with that! Based on your query, here's a comprehensive response that covers the key aspects you're asking about.\n\nFirst, let me break down the main points:\n\n1. **Understanding the Context**: Your question touches on an important topic that requires careful consideration of multiple factors.\n\n2. **Key Considerations**: There are several approaches we could take here, each with their own trade-offs.\n\n3. **Recommendation**: Based on best practices, I would suggest starting with the most straightforward approach and iterating from there.\n\nWould you like me to elaborate on any specific aspect?",
@@ -62,13 +73,11 @@ function simulateRateLimit(): boolean {
  * =====================================================
  * MOCK RESPONSE GENERATOR
  * =====================================================
- * Simulates streaming responses from AI providers.
+ * Simulates responses from AI providers.
  * Replace with actual API calls in production.
  * 
  * Integration points:
  * - fetch/axios for HTTP requests
- * - EventSource for SSE streaming
- * - WebSocket for bidirectional streaming
  * - AbortController for cancellation
  * =====================================================
  */
@@ -79,37 +88,18 @@ export async function generateMockResponse(
   onUpdate: (update: Partial<ProviderResponse>) => void
 ): Promise<ProviderResponse> {
   const startTime = Date.now();
-  const id = Math.random().toString(36).substring(2, 15);
   
-  // Simulate initial latency (different per provider)
-  const baseLatency = {
-    gpt: 500,
-    llama: 600,
-    mistral: 400,
-    gemini: 450,
-    copilot: 550,
-    deepseek: 700,
-  }[provider];
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
   
-  await sleep(baseLatency + Math.random() * 500);
-  
-  /**
-   * =====================================================
-   * RATE LIMIT HANDLING PLACEHOLDER
-   * =====================================================
-   * if (response.status === 429) {
-   *   const retryAfter = response.headers.get('Retry-After');
-   *   throw new RateLimitError(retryAfter);
-   * }
-   * =====================================================
-   */
-  if (simulateRateLimit()) {
+  // Simulate rate limiting
+  if (Math.random() < 0.05) {
     onUpdate({ 
-      status: 'rate-limited', 
-      errorMessage: 'Rate limit exceeded. Retry after 30 seconds.' 
+      status: 'rate-limited',
+      errorMessage: 'Rate limit exceeded. Retry after 30 seconds.'
     });
     return {
-      id,
+      id: generateId(),
       provider,
       prompt,
       response: '',
@@ -117,33 +107,18 @@ export async function generateMockResponse(
       metrics: { latencyMs: null, tokenCount: null, responseLength: 0, firstTokenLatencyMs: null, tokensPerSecond: null },
       retryCount: 0,
       errorMessage: 'Rate limit exceeded. Retry after 30 seconds.',
-      streamingProgress: 0,
       timestamp: startTime,
-      isStreaming: false,
     };
   }
   
-  /**
-   * =====================================================
-   * ERROR HANDLING PLACEHOLDER
-   * =====================================================
-   * try {
-   *   const response = await fetch(endpoint, options);
-   *   if (!response.ok) throw new ProviderError(response);
-   * } catch (error) {
-   *   if (error instanceof NetworkError) { ... }
-   *   if (error instanceof TimeoutError) { ... }
-   *   if (error instanceof AuthError) { ... }
-   * }
-   * =====================================================
-   */
-  if (simulateError()) {
+  // Simulate provider errors
+  if (Math.random() < 0.1) {
     onUpdate({ 
-      status: 'error', 
-      errorMessage: 'Provider temporarily unavailable. Please retry.' 
+      status: 'error',
+      errorMessage: 'Provider temporarily unavailable. Please retry.'
     });
     return {
-      id,
+      id: generateId(),
       provider,
       prompt,
       response: '',
@@ -151,94 +126,42 @@ export async function generateMockResponse(
       metrics: { latencyMs: null, tokenCount: null, responseLength: 0, firstTokenLatencyMs: null, tokensPerSecond: null },
       retryCount: 0,
       errorMessage: 'Provider temporarily unavailable. Please retry.',
-      streamingProgress: 0,
       timestamp: startTime,
-      isStreaming: false,
     };
   }
   
-  // Get random response for this provider
-  const responses = MOCK_RESPONSES[provider];
-  const fullResponse = responses[Math.floor(Math.random() * responses.length)];
+  // Simulate response generation
+  const responseText = generateMockResponseText(provider, prompt, context);
+  const totalTokens = Math.ceil(responseText.length / 4);
   
-  // Simulate streaming
-  const firstTokenTime = Date.now();
-  onUpdate({ 
-    status: 'streaming', 
-    isStreaming: true,
-    metrics: { 
-      latencyMs: null, 
-      tokenCount: null, 
-      responseLength: 0,
-      firstTokenLatencyMs: firstTokenTime - startTime,
-      tokensPerSecond: null,
+  // Update with final response
+  onUpdate({
+    status: 'success',
+    response: responseText,
+    metrics: {
+      latencyMs: Date.now() - startTime,
+      tokenCount: totalTokens,
+      responseLength: responseText.length,
+      firstTokenLatencyMs: Date.now() - startTime,
+      tokensPerSecond: totalTokens / ((Date.now() - startTime) / 1000),
     }
   });
   
-  /**
-   * =====================================================
-   * STREAMING VISUALIZATION PLACEHOLDER
-   * =====================================================
-   * This simulates token-by-token streaming.
-   * In production, parse actual streaming chunks:
-   * 
-   * const decoder = new TextDecoder();
-   * for await (const chunk of response.body) {
-   *   const text = decoder.decode(chunk);
-   *   const parsed = parseSSEData(text);
-   *   onUpdate({ response: accumulated + parsed.content });
-   * }
-   * =====================================================
-   */
-  let accumulated = '';
-  const words = fullResponse.split(' ');
-  const tokensPerChunk = 3;
-  
-  for (let i = 0; i < words.length; i += tokensPerChunk) {
-    const chunk = words.slice(i, i + tokensPerChunk).join(' ') + ' ';
-    accumulated += chunk;
-    
-    const progress = Math.min(100, Math.round((i / words.length) * 100));
-    const elapsed = Date.now() - startTime;
-    const estimatedTokens = Math.ceil(accumulated.length / 4);
-    
-    onUpdate({
-      response: accumulated,
-      streamingProgress: progress,
-      metrics: {
-        latencyMs: elapsed,
-        tokenCount: estimatedTokens,
-        responseLength: accumulated.length,
-        firstTokenLatencyMs: firstTokenTime - startTime,
-        tokensPerSecond: estimatedTokens / (elapsed / 1000),
-      },
-    });
-    
-    // Variable delay to simulate realistic streaming
-    await sleep(30 + Math.random() * 50);
-  }
-  
-  const endTime = Date.now();
-  const totalLatency = endTime - startTime;
-  const tokenCount = Math.ceil(fullResponse.length / 4); // Rough token estimate
-  
   return {
-    id,
+    id: generateId(),
     provider,
     prompt,
-    response: fullResponse.trim(),
+    response: responseText,
     status: 'success',
     metrics: {
-      latencyMs: totalLatency,
-      tokenCount,
-      responseLength: fullResponse.length,
-      firstTokenLatencyMs: firstTokenTime - startTime,
-      tokensPerSecond: tokenCount / (totalLatency / 1000),
+      latencyMs: Date.now() - startTime,
+      tokenCount: totalTokens,
+      responseLength: responseText.length,
+      firstTokenLatencyMs: Date.now() - startTime,
+      tokensPerSecond: totalTokens / ((Date.now() - startTime) / 1000),
     },
     retryCount: 0,
     errorMessage: null,
-    streamingProgress: 100,
     timestamp: startTime,
-    isStreaming: false,
   };
 }

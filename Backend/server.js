@@ -252,19 +252,15 @@ app.post('/api/v1/auth/verify-otp', (req, res) => {
   }
 });
 
-// Import API routes
-const apiRoutes = require('./routes/api');
-
-// Use API routes
-app.use('/api/v1', apiRoutes);
+// Import the app module which contains all the routes
+const appModule = require('./src/app');
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date() });
 });
 
-// Import the actual provider response processing from middleware
-const { processProviderResponse } = require('./middleware/ai-providers');
+
 
 // Start the server
 app.listen(PORT, () => {

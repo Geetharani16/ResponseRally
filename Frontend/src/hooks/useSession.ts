@@ -237,9 +237,7 @@ export function useSession() {
         },
         retryCount: 0,
         errorMessage: null,
-        streamingProgress: 0,
         timestamp: Date.now(),
-        isStreaming: false,
       })),
     }));
 

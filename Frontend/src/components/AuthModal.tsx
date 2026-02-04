@@ -123,6 +123,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
         localStorage.setItem('userEmail', email);
         localStorage.setItem('username', formData.name || email.split('@')[0]);
         localStorage.setItem('userId', data.userId || 'default-user');
+        
+        // Store join date - use existing date if available, otherwise set current date
+        // For new registrations, this will be the first login date
+        // For existing users, we preserve their original join date
+        const existingJoinDate = localStorage.getItem('userJoinDate');
+        if (!existingJoinDate) {
+          localStorage.setItem('userJoinDate', new Date().toISOString());
+        }
+        
         onAuthSuccess();
       } else {
         alert(data.error || 'Invalid OTP');

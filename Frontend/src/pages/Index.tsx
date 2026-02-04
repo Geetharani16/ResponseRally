@@ -25,7 +25,7 @@ import { AuthModal } from '@/components/AuthModal';
  * BACKEND INTEGRATION POINTS:
  * - See hooks/useSession.ts for API call placeholders
  * - See lib/mockApi.ts for response handling patterns
- * - Streaming: SSE/WebSocket/fetch streams supported
+
  * 
  * =====================================================
  */
@@ -102,9 +102,13 @@ const Index: React.FC = () => {
       <main className="max-w-[1800px] mx-auto px-6 py-8">
         <div className="space-y-8">
           {/* Conversation History */}
-          {hasHistory && (
+          {(hasHistory || session.currentPrompt) && (
             <section className="animate-fade-in">
-              <ConversationHistory turns={session.conversationHistory} />
+              <ConversationHistory 
+                turns={session.conversationHistory} 
+                currentPrompt={session.currentPrompt}
+                isProcessing={session.isProcessing}
+              />
             </section>
           )}
 
@@ -116,8 +120,8 @@ const Index: React.FC = () => {
                   Response Comparison
                 </h2>
                 {session.isProcessing && (
-                  <span className="text-sm text-primary font-mono streaming-indicator">
-                    Streaming responses...
+                  <span className="text-sm text-primary font-mono">
+                    Processing responses...
                   </span>
                 )}
               </div>
@@ -144,20 +148,23 @@ const Index: React.FC = () => {
           {/* Prompt Input Section */}
           <section className={cn(
             'transition-all duration-500',
-            hasCurrentResponses && !session.selectedResponseId ? 'opacity-50 pointer-events-none' : ''
+            hasCurrentResponses && !session.selectedResponseId ? 'opacity-50 pointer-events-none' : '',
+            session.currentPrompt && session.isProcessing ? 'opacity-50 pointer-events-none' : ''
           )}>
-            {hasHistory && !hasCurrentResponses && (
+            {(hasHistory || session.currentPrompt) && !hasCurrentResponses && (
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-foreground">
-                  Continue Conversation
+                  {session.currentPrompt ? 'Processing Prompt' : 'Continue Conversation'}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Your next prompt will use the conversation context above.
+                  {session.currentPrompt
+                    ? 'Your current prompt is being processed by multiple AI providers.'
+                    : 'Your next prompt will use the conversation context above.'}
                 </p>
               </div>
             )}
             
-            {!hasHistory && !hasCurrentResponses && (
+            {!hasHistory && !hasCurrentResponses && !session.currentPrompt && (
               <div className="text-center mb-8 animate-fade-in">
                 <h2 className="text-3xl font-bold mb-3">
                   <span className="gradient-text">Compare AI Responses</span>
@@ -176,9 +183,11 @@ const Index: React.FC = () => {
               enabledProviders={session.enabledProviders}
               onToggleProvider={toggleProvider}
               placeholder={
-                hasHistory
-                  ? "Continue the conversation..."
-                  : "Enter your prompt here... Compare responses from multiple AI providers."
+                session.currentPrompt && session.isProcessing
+                  ? "Processing current prompt..."
+                  : hasHistory
+                    ? "Continue the conversation..."
+                    : "Enter your prompt here... Compare responses from multiple AI providers."
               }
             />
           </section>

@@ -13,6 +13,12 @@ exports.getDashboardData = async (req, res, next) => {
       });
     }
     
+    console.log(`\n=== Dashboard Data Request Debug ===`);
+    console.log(`Received userId: ${userId}`);
+    console.log(`Type of userId: ${typeof userId}`);
+    console.log(`UserId length: ${userId.length}`);
+    console.log(`=====================================\n`);
+    
     console.log(`\n=== Dashboard Data Request ===`);
     console.log(`User ID: ${userId}`);
     console.log(`Timestamp: ${new Date().toISOString()}`);

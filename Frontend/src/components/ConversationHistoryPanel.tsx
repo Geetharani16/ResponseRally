@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { X, MessageCircle, Clock, Trash2, Plus, User, Search, LogOut, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ConversationTurn } from '@/types';
+import { ConversationTurn, SessionState } from '@/types';
+import { getUserConversations } from '@/lib/api';
 
 interface StoredConversation {
   id: string;
@@ -18,7 +19,7 @@ interface ConversationHistoryPanelProps {
   onClose: () => void;
   onLoadConversation: (conversation: StoredConversation) => void;
   onLogout?: () => void;
-  currentSession: import('@/types').SessionState;
+  currentSession: SessionState;
 }
 
 export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> = ({
@@ -37,10 +38,24 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
   const [searchQuery, setSearchQuery] = useState('');
   const [username, setUsername] = useState<string>('');
 
-  // Get username from localStorage on mount
+  // Get username from localStorage on mount and update when auth changes
   useEffect(() => {
     const storedUsername = localStorage.getItem('username') || 'User';
     setUsername(storedUsername);
+  }, []);
+
+  // Update username when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedUsername = localStorage.getItem('username') || 'User';
+      setUsername(storedUsername);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Close panel with Escape key
@@ -55,10 +70,12 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Load conversations from localStorage on mount
+  // Load conversations from localStorage and backend on mount
   useEffect(() => {
     loadConversations();
   }, []);
+
+
 
   // Auto-save current conversation when it changes
   useEffect(() => {
@@ -67,27 +84,99 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
     }
   }, [currentSession.conversationHistory]);
 
-  const loadConversations = () => {
+  const loadConversations = async () => {
+    setIsLoading(true);
     try {
-      const saved = localStorage.getItem('rr_conversations');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setConversations(parsed.sort((a: StoredConversation, b: StoredConversation) => 
-          b.lastUpdated - a.lastUpdated
-        ));
-        // Update conversation count in header
+      // Check if user is authenticated
+      const userId = localStorage.getItem('userId');
+      
+      if (userId) {
+        try {
+          // Fetch user-specific conversations from backend (MongoDB only)
+          const response = await getUserConversations(userId);
+          
+          // Process backend responses to create conversation objects
+          const backendConversations: StoredConversation[] = [];
+          
+          // Type guard to check if response has the expected structure
+          if (response && typeof response === 'object' && 'responses' in response && Array.isArray(response.responses)) {
+            // Group responses by conversation/session to form conversation turns
+            const conversationMap = new Map();
+            
+            // First, group responses by conversationId
+            (response.responses as any[]).forEach((res: any) => {
+              if (res.conversationId) {
+                if (!conversationMap.has(res.conversationId)) {
+                  conversationMap.set(res.conversationId, {
+                    id: res.conversationId,
+                    title: res.prompt || res.userPrompt || 'Untitled Conversation',
+                    turns: [],
+                    createdAt: Date.now(),
+                    lastUpdated: Date.now(),
+                    providerCount: 0
+                  });
+                }
+                
+                const conv = conversationMap.get(res.conversationId);
+                
+                // Add response to the conversation turn
+                if (!conv.turns.some((turn: any) => turn.userPrompt === res.prompt || turn.userPrompt === res.userPrompt)) {
+                  conv.turns.push({
+                    id: res.conversationId,
+                    userPrompt: res.prompt || res.userPrompt,
+                    selectedResponse: res,
+                    allResponses: [res],
+                    timestamp: res.createdAt || res.timestamp || Date.now()
+                  });
+                }
+              }
+            });
+            
+            // Convert map to array and add to backend conversations
+            conversationMap.forEach((conv: any) => {
+              conv.providerCount = new Set(conv.turns.flatMap((turn: any) => 
+                turn.allResponses?.map((r: any) => r.provider) || []
+              )).size;
+              backendConversations.push(conv);
+            });
+          }
+          
+          // Use only backend conversations (MongoDB only approach)
+          const sortedConversations = backendConversations.sort((a, b) => 
+            b.lastUpdated - a.lastUpdated
+          );
+          
+          setConversations(sortedConversations);
+          
+          // Update conversation count in header
+          window.dispatchEvent(new CustomEvent('rr-conversation-count', {
+            detail: sortedConversations.length
+          }));
+        } catch (backendError) {
+          console.error('Error fetching user conversations from backend:', backendError);
+          
+          // Show empty state if backend fails
+          setConversations([]);
+          window.dispatchEvent(new CustomEvent('rr-conversation-count', {
+            detail: 0
+          }));
+        }
+      } else {
+        // No user authenticated - show empty state instead of localStorage
+        setConversations([]);
         window.dispatchEvent(new CustomEvent('rr-conversation-count', {
-          detail: parsed.length
+          detail: 0
         }));
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
+      setConversations([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveCurrentConversation = () => {
+  const saveCurrentConversation = async () => {
     if (currentSession.conversationHistory.length === 0) return;
 
     try {
@@ -105,19 +194,25 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
         )).size
       };
 
+      // Since we're MongoDB-only, we don't save to localStorage
+      // The conversation is already stored in the backend session
+      
+      // Update the conversation list with the new conversation
       const updatedConversations = conversations.filter(conv => conv.id !== conversationId);
       updatedConversations.unshift(newConversation);
       
       // Keep only last 50 conversations
       const trimmedConversations = updatedConversations.slice(0, 50);
       
-      localStorage.setItem('rr_conversations', JSON.stringify(trimmedConversations));
       setConversations(trimmedConversations);
       
       // Update conversation count
       window.dispatchEvent(new CustomEvent('rr-conversation-count', {
         detail: trimmedConversations.length
       }));
+      
+      // The conversation is automatically stored in MongoDB through the session system
+      // No additional action needed here
     } catch (error) {
       console.error('Error saving conversation:', error);
     }
@@ -128,19 +223,21 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
     onClose();
   };
 
-  const handleDeleteConversation = (id: string, e: React.MouseEvent) => {
+  const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDeleting(id);
     
     try {
       const updatedConversations = conversations.filter(conv => conv.id !== id);
-      localStorage.setItem('rr_conversations', JSON.stringify(updatedConversations));
       setConversations(updatedConversations);
       
       // Update conversation count
       window.dispatchEvent(new CustomEvent('rr-conversation-count', {
         detail: updatedConversations.length
       }));
+      
+      // In a full implementation, we would call a backend API to delete the conversation
+      // For now, the deletion is handled locally but will be refetched on next load
     } catch (error) {
       console.error('Error deleting conversation:', error);
     } finally {
@@ -154,7 +251,7 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
     setRenameValue(currentTitle);
   };
 
-  const handleRenameSubmit = (id: string, e: React.FormEvent) => {
+  const handleRenameSubmit = async (id: string, e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -167,10 +264,12 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
           : conv
       );
       
-      localStorage.setItem('rr_conversations', JSON.stringify(updatedConversations));
       setConversations(updatedConversations);
       setIsRenaming(null);
       setRenameValue('');
+      
+      // In a full implementation, we would call a backend API to rename the conversation
+      // For now, the update is handled locally but will be refetched on next load
     } catch (error) {
       console.error('Error renaming conversation:', error);
     }
@@ -189,6 +288,10 @@ export const ConversationHistoryPanel: React.FC<ConversationHistoryPanelProps> =
     if (onLogout) {
       onLogout();
     }
+    // Clear user data and reload conversations
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    loadConversations();
     onClose();
   };
 
